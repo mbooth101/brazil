@@ -1,0 +1,60 @@
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+
+# firefox balloon help
+# title.<id> will be the help text
+
+# this used the old ID template
+title.append=meeting events
+title.menu=links to other pages
+title.syn=link status
+title.state=fetching: waiting for an event from the server
+title.status=system status
+title.now=last update time
+title.lock=conference lock state
+title.key=icon key
+title.main=main conference status table
+title.members=current conference members
+title.events=recent conference events
+
+# This uses the TitleTemplate
+# title=foo will look here for title.foo as the text
+
+title.main\ template=Meetme Conferencing System
+
+# confadmin
+title.conftitle=Will be spoken to new members
+title.admins=These users have admin privileges on the web site
+title.update=update the form
+title.confdelete=Warning! this will delete the entire conference
+title.confnum=Enter at least a 3 digit conference number
+
+# createconf
+title.createconf=Create a new conference ${query.confno}
+
+# db
+title.astfamily=AST-db family (try confNNN)
+
+# debug
+title.props=enter a server property
+title.propvalue=The new value
+
+# meetme
+title.iconon=talking, click to mute
+title.iconoff=listening, click to mute
+title.iconmute=muted, click to unmute
+
+title.viewon=talking
+title.viewoff=listening
+title.viewmute=muted
+
+# system
+title.template.debug=true|false: include template tags as comments
+title.set.track=true|false: Log all property changes on the console
+title.icons=list of talking/listening/muted icons
+
+# template
+title.brazil=The Brazil Project Web Framework

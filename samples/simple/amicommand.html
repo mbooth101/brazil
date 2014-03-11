@@ -1,0 +1,22 @@
+<title>
+Asterisk Web-based AMI interface
+</title>
+<h1>Asterisk AMI command interface</h1>
+<form prepend=query.>
+  Enter an AMI command:<input name=command>
+  (<code>help</code> for a list of commands.)
+</form>
+<if query.command>
+  <h2>Results for: <get query.command></h2>
+  <!-- alternate method, using the queues directly
+    <set name=action value=${query.command}>
+    <enqueue name=astserver from=${SessionID} data=action>
+    <dequeue name=${SessionID} prepend=q.>
+  -->
+  <amicommand prepend=q server=astserver action=command
+   command=${query.command}
+  >
+  <table border><tr><td>
+    <pre><get name=q.data default = "(no data)"></pre>
+  </td></tr>
+</if>

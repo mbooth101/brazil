@@ -1,0 +1,24 @@
+<title>meetme admin test</title>
+
+<if query.conf>
+  Running: <code>meetme <get query.mute>mute <get query.conf> <get query.user></code></br>
+  <amicommand server=${system.server} prepend=q
+              action=originate
+	      channel=local/${query.conf}@ami-meetmeadmin
+	      Variable=command=${query.action}${query.user}
+	      Application=Noop
+  />
+</if>
+<form method=post prepend=query.>
+  Enter conference number:<input name=conf size=3 value=""><br>
+  User number:<input name=user size=2 value=""><br>
+  Do what:
+   <select name=action>
+   <foreach name=i glob=meetmeadmin.* sort>
+     <option value=${i.value}><get i.name.1>
+   </foreach>
+   </select>
+  <input type=submit>
+</form>
+<hr>
+<foreach name=i glob=q.* sort><get i.name>=<get i.value><br></foreach>

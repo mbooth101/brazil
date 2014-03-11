@@ -1,0 +1,83 @@
+<title>Mute test</title>
+<link rel="stylesheet" type="text/css" href="/style.css" title="default">
+<h1>Conference Actions</h1>
+<pre>
+[Not Done]
+</pre>
+
+<if name=query.action match="^mute|unmute|kick">
+  <get query.action> <get query.conf>/<get query.user></code></br>
+  <amicommand server=${system.server} prepend=q action=command
+              command="meetme ${query.action} ${query.conf} ${query.user}"
+  />
+</if>
+
+<if name=query.action match="lock|unlock">
+  <get query.action> <get query.conf>/<get query.user></code></br>
+  <amicommand server=${system.server} prepend=q action=command
+              command="meetme ${query.action} ${query.conf}"
+  />
+</if>
+
+<!-- fetch active conferences -->
+
+<import namespace=conference />
+<getconfs>
+<amicommand
+ server=${system.server} prepend=q action=command
+ command="meetme"
+>
+<extract all=true name=q.data prepend=get
+  match="\n([0-9]+)[^\n]*"
+  map="num"
+>
+<if not name=get.matches>
+  <h2>There are currently no active conferences</h2>
+  <abort>
+</if>
+
+<form method=post>
+Select conference:
+<select name=conf>
+  <foreach name=i property=get.matchlist>
+    <option value="${get.${i}.num}"><get name=conf.${get.${i}.num}.title> (<get name=get.${i}.num>)
+  </foreach>
+</select>
+<h2>Conference level actions</h2>
+<input type=submit name=action value=lock
+ title="No additional participants may join this conference"
+>
+<input type=submit name=action value=unlock
+ title="additional participants may join this conference"
+>
+<br>
+<input name=message1
+ title="text will be turned into speech"
+>
+<input type=submit name=action value=whisper-all
+ title="synthesized speech will be play to all conference members"
+>
+<br>
+<select name=file>
+  <option name=tt-monkeys>Monkeys
+  <option name=tt-weasels>Weasels
+  <option name=tt-somethingwrong>Something is wrong
+  <option name=conf-usermenu>User instructions
+</select>
+<input type=submit name=action value=broadcast
+ title="This audio file will be played to the conference"
+>
+<h2>User level actions</h2>
+User number:
+<input name=user size=2 value="" title="Enter the meetme user number">
+<br>
+<input type=submit name=action value=mute>
+<input type=submit name=action value=unmute>
+<input type=submit name=action value=kick>
+<hr>
+<input name=message2
+ title="synthesized speech will be play to a specific conference member"
+>
+<input type=submit name=action value=whisper>
+<br>
+</form>

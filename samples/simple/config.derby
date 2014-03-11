@@ -1,0 +1,22 @@
+log=5
+port=5555
+
+handler=sunlabs.brazil.server.ChainHandler
+handlers = derby main
+
+# This turns-on network access to derby.
+# without it, derby may only be accessed from within brazil.
+derby.class=sunlabs.brazil.derby.DerbyServer
+
+main.class=sunlabs.brazil.template.TemplateHandler
+main.templates= set bsl sql
+bsl.class=sunlabs.brazil.template.BSLTemplate 
+set.class=sunlabs.brazil.template.SetTemplate 
+set.query=query.
+
+sql.class=sunlabs.brazil.sql.SqlTemplate 
+sql.driver=org.apache.derby.jdbc.EmbeddedDriver
+sql.url=jdbc:derby:testDB;create=true
+sql.sqlPrefix=sql.params
+sql.params.user=user1
+sql.params.password=user1

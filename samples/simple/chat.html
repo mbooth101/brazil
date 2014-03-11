@@ -1,0 +1,155 @@
+<!--
+  Simple "chat" system do demonstrate asyn. server push (aka COMET)
+  SAU 12/06
+-->
+
+<!-- fetch a message in the background  (from async XMLHttpRequest) -->
+
+<if name=query.background>
+  <debug dequeueing (${userid})...>
+  <dequeue name=${userid} prepend=q timelimit=90>
+  <debug "DQ got (${q.query.message}) ${q.timelimit}">
+  <if not name=q.error value=timelimit>
+    <b><get q.userid></b>: <get name=q.query.message><br>
+  </if>
+  <abort>
+</if>
+
+<!-- enqueue a message  (from sync XMLHttpRequest) -->
+
+<if name=query.message>
+  <debug enqueueing (${query.message})>
+  <enqueue glob=user.* data="userid query.message" delim="\n">
+  <abort>
+</if>
+
+<!-- normal fedetch/reload -->
+
+<head>
+<title>Simple chat system</title>
+</head>
+
+<if query.logoff>
+  <if userid>
+    <set namespace=local name=gone value=${userid}>
+    <set namespace=local name=query.message value="I just left!">
+    <set name=user.${userid} namespace=server>
+    <enqueue glob=user.*  data="userid query.message" delim="\n">
+    <set name=userid>
+    <set name=userid namespace=back.${SessionID}>
+    <queueinfo name=${gone} remove=true>
+  </if>
+</if>
+
+<!-- sign up a userid -->
+
+<if name=query.userid>
+  <lock name=users>
+    <if name=user.${query.userid}>
+      <set namespace=local name=msg value="${query.userid} is already in use">
+    <else>
+      <set name=userid value=${query.userid}>
+      <set name=userid value=${query.userid} namespace=back.${SessionID}>
+      <set namespace=server name=user.${userid} value=${headers.timestamp}>
+      <set namespace=local name=query.message value="I just joined!">
+      <queueinfo name=${userid} clear=true>
+      <enqueue glob=user.* data="userid query.message" delim="\n">
+    </if>
+  </lock>
+</if>
+
+<!-- ask for a user registration -->
+
+<if not name=userid>
+  <body>
+  <h2>Register a user name</h2>
+  <span style='color: orange;'><get msg></span>
+  <form prepend=query.>
+    Choose a user name:<input name=userid value="">
+    <input type=submit value=register>
+  </form>
+  </body>
+  <abort>
+</if>
+
+<!-- draw thew main page -->
+
+<body onload='fetchUpdate()'>
+<style>
+  .scroll { width: 450px; height: 350px; overflow: auto; }
+</style>
+
+<h2>You are <get userid></h2>
+<table width=100%>
+  <tr><td><div id=messages class=scroll></td></tr>
+  <tr><td>
+    <form prepend=query. onsubmit='dosubmit(this.message);return false;'>
+      send message:<input name=message>
+    </form>
+  </td></tr>
+</table>
+<a href=?logoff=true>log out</a>|
+<a href="javascript:clear()" title="clear messages">clear</a>
+
+<script>
+
+  /*
+   * loop:
+   * - do an async http request
+   * - wait for a message to de-queue
+   * - update display
+   */
+
+  var fetching=0;	// our mutex
+  function fetchUpdate() {
+    var req;		// the http request object
+    if (fetching > 0) return 0;
+    fetching=1;
+    req = getreq();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+	if (req.responseText != null) {
+           var d = document.getElementById("messages");
+           d.innerHTML = req.responseText + d.innerHTML;
+	   setTimeout('fetchUpdate()', 100);
+	} else {
+           d.innerHTML = "(network error)<br>"  + d.innerHTML;
+	   setTimeout('fetchUpdate()', 10000);
+	}
+	fetching=0;
+      }
+    }
+    req.open("GET", "/chat.html?background=1");
+    req.send(null);
+    return 1;
+  }
+
+  function getreq() { 			// get an http request object
+    if (window.XMLHttpRequest) {	// Mozilla/firefox
+        return new XMLHttpRequest();
+    } else {				// IE
+        return new ActiveXObject("Microsoft.XMLHTTP");
+    }
+  }
+
+  /*
+   * Sync. background form submit
+   * field: form element name containing data to submit
+   */
+
+  function dosubmit(field) { // submit a field value
+    var req = getreq();
+    req.open("GET", "/chat.html?message=" + escape(field.value), true);
+    field.value="";
+    req.send(null);
+    return void(0);
+  }
+
+  // clear the messages window
+
+  function clear() {
+     var d = document.getElementById("messages");
+     d.innerHTML = "(cleared)<br>";
+  }
+</script>
+</body>

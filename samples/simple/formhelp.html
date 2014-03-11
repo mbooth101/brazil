@@ -1,0 +1,54 @@
+<!-- test the help extensions to the form template -->
+
+<head>
+  <title>testing built-in help</title>
+  <script>
+    <!-- display field help text (or div contents) -->
+    var timer=null;
+    function do_help(text) {
+      if (timer && text.length > 0) {
+	  clearTimeout(timer);
+      }
+      div = document.getElementById(text);
+      id = document.getElementById("help");
+      if (div) {
+	  id.innerHTML = div.innerHTML;
+      } else {
+	  id.innerHTML = text;
+      }
+      timer = setTimeout("do_help('')", 5000);
+    }
+  </script>
+</head>
+
+<body>
+  <form help="do_help(%)" prepend=query. event=onmouseover>
+    text:<input name=text type=text help="enter some text here"><br>
+    props text:<input name=text2 type=text help="more text here"><br>
+    <textarea name=area help="This is a text area">
+    some text
+    </textarea><br>
+    Choose one:
+    <input type=radio name=r selected value=yes help="on by default">
+    <input type=radio name=r selected value=no help="This one is off">
+    <input type=radio name=r selected value=no helpname=banana><br>
+    <select name=select help="select something">
+      <option>a
+      <option>b
+      <option>c
+    </select>
+    <input type=submit help="push">
+  </form>
+  <div id=help style="color:red">field help goes here</div>
+
+  <!-- help div when you need more than ordinary text -->
+
+  <div style="display:none" id=push>
+    <b>p</b>ush <b>t</b>he <b>b</b>utton:
+    <ol>
+    <li>cause it's there
+    <li>cause you can
+    <li>just cause
+    </ol>
+  </div>
+</body>

@@ -1,0 +1,20 @@
+Auxilliary files for use with the conference application
+
+app_meetme.c
+  modified version of meetme sources (for Asterisk 1.2. A version
+  for Asterisk 1.4 should be in the Asterisk bug tracker.)
+checkbsl
+  Script for syntax-checking the templates.
+conf2.conf
+  additions to extensions.conf required to add in the conferencing
+  functions to Asterisk
+dumpastdb.tcl
+loadastdb.tcl
+  A standalone utility to dump/restore the asterisk database.
+  This allows conference room settings to be copied to different
+  Asterisk installations
+freetts
+  AGI script for text-2-speech, using "freetts" integrated into
+  the Server.
+sample.conf
+  A complete sample Asterisk configuration for running the Conferencing system

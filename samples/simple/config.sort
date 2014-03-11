@@ -1,0 +1,20 @@
+# test bsl sorting
+
+port=9001
+log=5
+
+# This is the "short cut" way of defining configurations, using class names instead of tokens
+
+handler=sunlabs.brazil.server.ChainHandler
+handlers=sunlabs.brazil.properties.ExprPropsHandler sunlabs.brazil.template.TemplateHandler
+templates=sunlabs.brazil.template.SetTemplate sunlabs.brazil.template.BSLTemplate
+
+# sort these items in various ways
+
+name.1.a=2
+name.6.a=-3
+name.11.a=5
+name.1.b=5
+name.6.b=11
+name.11.b=1
+name.4.b=7

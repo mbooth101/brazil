@@ -1,0 +1,51 @@
+# config file for Simple Asterisk Manager Interface example
+# This example sends AGI commands to Asterisk, and synchronously gets
+# the responses. It doesn't use the AMI event notification.
+
+log=3
+exitOnError=true
+port=6668
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie asth template
+
+# use cookies for session state
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=monster
+
+# template processing
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.debug=true
+template.templates=set bsl debug form asth
+
+###################################
+
+# configure the templates
+#
+# set:  <get> <set> <namespace> <import>
+# bsl:  <if> <else> <foreach> <extract> ...
+# debug: <debug> ("printf" debugging to console)
+
+bsl.class=sunlabs.brazil.template.BSLTemplate
+debug.class=sunlabs.brazil.template.DebugTemplate
+debug.debug=1
+form.class=sunlabs.brazil.template.FormTemplate
+set.class=sunlabs.brazil.template.SetTemplate
+set.headers=headers.
+set.query=query.
+
+# This is both a handler (to connect to the AMI), and a template.
+# If you configure multiple handlers (for interacting with multiple
+# Asterisk servers), only one needs to be included as a template.  Use
+# the "queue" parameter in the handler configuration to determince which
+# server gets the command (the server attribute of <amicommand>).
+
+asth.class=sunlabs.brazil.asterisk.AsteriskHandler
+asth.userid=sau
+asth.password=xxxx
+asth.queue=astserver
+asth.server=pbx.mydomain.com
+asth.keepalive=30

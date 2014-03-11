@@ -1,0 +1,17 @@
+Sample template-based system for delivering web content.
+
+This configuration reformats all html content to a standard template.
+The "config.map" configuration file adds a web-mount" to
+http://www.experimentalstuff.com".
+
+To run the simple version:
+    java -jar brazil.jar -c config
+
+To run the "web mount" version:
+    java -jar brazil.jar -c config -c config.map
+
+To run the "persistent" version, that will save session state across
+server restarts, uncomment the appropriate line in config.persist and run:
+    java -jar brazil.jar -c config -c config.persist
+or
+    java -jar brazil.jar -c config -c config.map -c config.persist

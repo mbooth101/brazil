@@ -1,0 +1,16 @@
+<title>extract tag test</title>
+<h1>Testing extract</h1>
+<set local name=test1 value="this is a test of the emergency broadcast system">
+<extract name=test1 match="[^ ]+" all>
+<p>
+Extract the list:
+<pre>
+  <get test1>
+</pre>
+into separate, space delimeted elements:
+<ul>
+<foreach name=i glob=test1* sort>
+   <li><get i.name> = <get i.value>
+</foreach>
+</ul>
+<hr>

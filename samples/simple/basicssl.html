@@ -1,0 +1,16 @@
+<title>test the basic ssl handler</title>
+<h1>Welcome to the basic ssl handler</h1>
+
+<if name=header.protocol value=https>
+  <h2>You are connected to the secure server</h2>
+  to get to the regular server,
+  <a href="http://${header.hostname}:${port}${url.orig}">click here</a>
+<else>
+  <h2>You are connected to the ordinary, non secure server</h2>
+  to get to the secure server,
+  <a href="https://${header.hostname}:${sslport}${url.orig}">click here</a>
+</if>
+<h2> Server properties</h2>
+<foreach name=i glob=* sort>
+<get i.name>=<get i.value><br>
+</foreach>

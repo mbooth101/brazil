@@ -1,0 +1,13 @@
+<title>Download conference database</title>
+<h2>Save a copy of the asterisk conference database</h2>
+
+<if query.saveas>
+  <getconfs>
+  <set name=notemplate value=true>
+  <namespace name=conference store=admin/${query.saveas}.txt />
+  <addheader location=${query.saveas}.txt>
+</if>
+
+<form prepend=query.>
+save conference database as: <input name=saveas>
+</form>

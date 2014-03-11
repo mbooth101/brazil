@@ -1,0 +1,183 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  Process foreground requests 
+
+  vim: filetype=bsl
+
+  This page is fetched via a synchronous foreground request. The content is
+  ignored.  It operates via side effect only based on the query parameters
+
+-->
+
+<debug process(${headers.query})>
+Processing: <get headers.query><br>
+
+<!-- turn debugging on/off -->
+
+<if name=query.debug glob="?*">
+  <set name=debug value=${query.debug}>
+  <set namespace=BACKGROUND.${SessionID} name=debug value=${query.debug}>
+  <qnote session=${SessionID}
+         tag="Notice"
+         message="diagnostics - ${query.debug}"
+  >
+  <abort>
+</if>
+
+<!-- send a note -->
+
+<if name=query.type value=note>
+  <import namespace=users />
+  <if name=query.value value="?">
+    <foreach name=i match="^user[.]([^.]+)$" sort>
+      <append name=msg value=${i.name.1} delim=" ">
+    </foreach>
+    <qnote session=${SessionID}
+          tag="Notice"
+          message="Current web users: ${msg}"
+    >
+    <abort>
+  </if>
+  <debug NO HELP>
+  <extract name=query.value glob="*:*">
+  <if name=user.${query.value.1}>
+     <qnote session=${SessionID}
+            tag="Notice"
+            message="note sent to ${query.value.1}"
+     >
+     <qnote session=${user.${query.value.1}}
+            tag="from ${userid}"
+            message=${query.value.2}
+     >
+  <else>
+     <qnote session=${SessionID}
+            tag="Notice"
+            message="${query.value.1} not connected, note not sent"
+     >
+  </if>
+  <abort>
+</if>
+
+<!-- request icon and name change -->
+
+<if name=query.type value=change>
+  <set namespace=user_${userid} name=user.icon.${query.value} value=${query.icon}>
+  <set namespace=user_${userid} name=user.name.${query.value} value=${query.text}>
+  <qnote session=${SessionID}
+         tag="Notice"
+         message="Display for ${query.value} changed to: ${query.text}"
+  >
+  <abort>
+</if>
+
+<!-- everything past this point requires admin priviliges for the conference -->
+
+<if not name=role value=admin>
+  <qnote session=${SessionID}
+         tag="Warning"
+         message="No priviliges for command!"
+  >
+  <abort>
+</if>
+
+<!-- boot,louder,softer,mute off a user -->
+
+<if name=query.type glob=action.*>
+  <extract name=query.type glob=*.*>
+  <set namespace=local name=action value="${meetmeadmin.${query.type.2}#invalid}">
+  <if name=action value=invalid>
+    <debug "Invalid meetmeadmin command: ${query.type.2}">
+  <else>
+    <import namespace=BACKGROUND.${SessionID} />
+    <meetmeadmin action=${action}
+        notice="${user.${query.value}} ${query.type.2}"
+        user="${map.${query.value}}"
+    >
+  </if>
+  <abort>
+</if>
+
+<if name=query.type value=inject>
+  <amicommand server=${system.server} prepend=q
+     action=originate
+     Channel=local/${confno}@ami-joinmeeting
+     Application=Playback
+     Callerid=${system.monkeyid}
+     data=${query.value}
+     async=true
+  />
+</if>
+
+<!-- send a whipser  -->
+
+<if name=query.type value=whisper>
+   <import namespace=BACKGROUND.${SessionID} />
+   <import namespace=user_${userid} />
+       
+   <register key="Event" exp="UserEventMeetmeWhisper" queue=whisper-${SessionID}_${userid}>
+   <amicommand server=${system.server} prepend=q 
+       action=originate
+       Channel=local/${confno}@ami-meetmegenerate/n
+       Variable=message=${query.value}
+       Application=Noop
+   />
+    
+   <dequeue name=whisper-${SessionID}_${userid} prepend=q. timelimit=10>
+         
+   <amicommand server=${system.server} prepend=res 
+       action=MeetmeWhisper
+       Meetme=${confno}
+       Usernum=${map.${query.divid}}
+       Message=${q.filename}
+       Application=Noop
+   />
+
+   <unregister queue=whisper-${SessionID}_${userid} key="Event" exp="UserEventMeetmeWhisper">
+   
+   <if query.value>
+      <qnote session=${SessionID}
+         tag="Notice"
+         message="Message: \q${query.value}\q whispered to user: ${user.name.${id.${query.divid}}}"
+      >
+   </if>
+   
+   <abort> 
+</if>
+
+<!-- call out to invite a participant -->
+
+<if name=query.type value=call>
+  <if not name=query.value match="^[0-9]+$">
+    <qnote session=${SessionID} tag="Warning" message="invalid number: ${query.value}">
+    <abort>
+  </if>
+  <import namespace=BACKGROUND.${SessionID} />
+
+  <!-- this sucks! -->
+  <foreach name=i glob=id.*>
+    <if name=i.value value=${query.value}>
+      <qnote session=${SessionID} tag="Warning" message="Already in conference: ${query.value}">
+      <abort>
+    </if>
+  </foreach>
+
+  <amicommand server=${system.server} prepend=q
+     action=originate
+     channel=local/${query.value}@ami-callformeeting
+     context=ami-calljoinmeeting
+     Callerid=" (invited) \l${query.value}\g"
+     exten=s
+     priority=1
+     variable=confno=${confno}
+     async=true
+  />
+  <qnote session=${SessionID}
+         tag="Notice"
+         message="inviting ${query.value} to join the call..."
+  >
+</if>

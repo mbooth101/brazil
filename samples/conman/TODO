@@ -1,0 +1,23 @@
+ToDO list
+(in arbitrary order)
+
+* make "conf.html" refresh automatically
+* clean up the stuff in /admin/*
+* put the "ajax" javascript currently residing in monitor.html into a separate file
+* allow bridging of multiple conferences
+* add more stuff to app_meetme.c
+  - lock state
+  - user volumes
+  - volume change events
+  - user DTMF to manager events
+* use "DTMF" events for user's to signal the wb interface (e.g. for attention or voting or
+  meeting specific instructions (via whisper) [partially completed]
+* redo conf-admin to allow more conference options
+* redo conference recording to allow recording to be started/stopped from the
+  monitor console (in a manner analogous to monkeys).  We still need a "manager command"
+  to get the recordings off the Asterisk machine and onto the web site.
+* enable conference owners to view recordings
+* Enable "Tags" to be set on the phone-book, so we can invite every user with a given
+  tag at once
+
+Dec 4 2006 (SAU)

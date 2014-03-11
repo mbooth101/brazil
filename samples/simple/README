@@ -1,0 +1,139 @@
+Sample "simple" configurations that demonstrate using combinations of handlers
+They consist of pairs of file, config.XXX and XXX.html.  To test, run
+   java -jar brazil.jar -c config.XXX port nnnn
+and point your browser to:
+   http://localhost:nnnn/XXX.html
+
+Some examples need additional jar files.  To test run:
+   java -classpath brazil.jar[:OTHER.jar ...]  sunlabs.brazil.server.Main \
+      -c config.XXX port nnnn
+   See the notes in config.XXX for more details
+and use your browser, as above.
+
+-----------------------------------------------------------------------------
+Samples
+
+config.form
+   Shows an example of <form> tag processing, demonstrating that 
+   application processing is identical, no matter whether the form
+   is method=GET, method=POST, or encoding=form/multipart.
+
+config.formhelp
+   Demonstrates using the FormHelpTemplate to provide dynamic
+   field spacific help for html forms
+
+config.nat
+   Demonstrates a "reverse proxy" setup, which allows multiple servers
+   running behind a NAT to be accesible via one port-forwarded machine
+   and port.
+
+config.proxy
+   Shows a simple web proxy that is also a server
+
+config.sql
+   Shows a simple sql example.
+   This requires a jdbc driver jar file for your favorite sql database.
+
+config.bean
+   Shows a simple Bean Shell example The "beanshell.jar" must be
+   in your class path.
+
+config.builtin
+   The config file included in the jar file with Brazil releases, to
+   deliver the Brazil java-docs.
+
+config.cgi
+   Simple web server configuration that delivers files and runs cgi scripts.
+
+config.extract
+   Demonstrates the use of the <extract> tag to "parse" values using
+   regular expressions.
+
+config.resource
+   Demonstrates a web site contained within the jar file.  Individual
+   files may be "overridden" by providing newer versions in the file system
+
+config.smtp
+   Demonstrates how to send an email message from a web page using the
+   SMTPTemplate
+
+config.sort
+   Demonstrates various ways of using the "sort" option of the "foreach" tag of
+   the BSLTemplate
+
+config.translate
+   Shows how to use the IncludeTemplate to fetch content from a remote site,
+   and then "extract" useful bits out of it.
+
+config.vote
+   Demonstrates how an entire site may be built using a single page
+   template, whose processed content changes based on the URL.
+   This example presents a "voting" system, where users my cast votes
+   for one or more (in this case) state maps.
+
+config.calendar
+   Runs "dtcm_lookup", the solaris command line interface to the calendar, 
+   and converts it into HTML.  This demonstates both running and extracting
+   data from "command line" programs, as well as using date arithmetic to
+   generate calendar templates.
+
+config.rexx
+   Performs a simple rexxshell script that sets properties in request.props
+   and does basic output.  Needs NetRexxC.jar in your classpath. The ReXX
+   Shell template is in the contrib directory.
+
+config.macro
+   Demonstrates the use of the MacroTemplate to define "BSL" macros.
+   
+config.misc
+   Demonstrates some of the uses of the MiscTemplate
+
+config.basicssl
+   Demonstrate how to run a normal (http) and ssl (https) server in
+   the same vm
+
+config.derby
+   Demonstrate how to use Derby, both as an embedded SQL server, and
+   as a network database (assuming you have the right network connector).
+
+config.groovy
+   Sample embedded groove code
+
+config.restart
+   Using this configuration, you can restart the server by sending
+   it a SIGHUP (if your VM supports it - Sun's do).
+
+config.agi
+   Demonstrates the Brazil integration with the Asterisk PBX fast AGI
+   interface
+
+config.amicommand
+   Demonstrates issuing Asterisk AMI commands from a web page.  Make sure
+   to change the config file for your Asterisk installation.
+
+config.ajax
+   Demonstrates a technique for doing AJAX with Brazil.  This provides
+   for asynchronous updates of portions of web pages, as well as non-blocking
+   form handling.
+
+config.asterisk
+   Demonstrates using the Asterisk AMI event notification in conjunction
+   with "ajax".
+
+config.php
+   Demonstrates how to run php scripts intented for use with apache and
+   mod_php with Brazil using the CgiHandler
+
+config.chat
+   A minimal working chat/IRC system.  USer's choose a screen name, then
+   send messages that are received by all users.
+
+config.validate
+   A sample showing how to use the ValidateTemplate for from validation
+
+config.after
+   Demonstrates the "AfterTemplate".  This allows template markup
+   to be processed after a page has been delivered to the client.
+   It is often used for cleaning up client resources, or starting
+   long running jobs on the client's behalf without making the client
+   wait.

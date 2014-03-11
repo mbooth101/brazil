@@ -1,0 +1,42 @@
+# config file (config.agi) for interfacing Asterisk AGI to a web page
+
+log=3
+port=6668
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie agi template 
+
+# use cookies for web page session management
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=agi testing
+
+# start an agi pseudo-template handler
+agi.class=sunlabs.brazil.asterisk.AsteriskAGIHandler
+# Turning this on displays the (discarded) markup resulting from processing
+# the agi pseudo template; useful for script debugging.
+agi.debug=1
+agi.templates=set bsl agi debug misc
+# This is the default agi port
+agi.port=4573
+
+# Normal web browser templates
+template.class=sunlabs.brazil.template.TemplateHandler
+template.debug=true
+template.templates=set bsl debug form
+
+# configure the templates
+bsl.class=sunlabs.brazil.template.BSLTemplate
+debug.class=sunlabs.brazil.template.DebugTemplate
+debug.debug=1
+form.class=sunlabs.brazil.template.FormTemplate
+misc.class=sunlabs.brazil.sunlabs.MiscTemplate
+set.class=sunlabs.brazil.template.SetTemplate
+set.debug=true
+set.query=query.
+set.saveOk=true
+
+# without this, the web pages and agi scripts won't share the same
+# namespaces.  This tells the AGI templates to use the same
+# set of namespaces as the TemplateHandler
+set.sessionTable=template.

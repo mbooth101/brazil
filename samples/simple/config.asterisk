@@ -1,0 +1,102 @@
+# config.asterisk: file for playing with AJAX and the Asterisk Manager Interface
+# This is a combination of the "ajax" demo with "asterisk", and demonstrates
+# one technique for getting dynamic updates from "asterisk" into a web page.
+
+# You will need to change the configuration to match your Asterisk servers
+# below (see ast1.* and ast2.* below).
+
+log=3
+exitOnError=true
+port=6668
+maxRequests=100
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie background map ast1 ast2 template file
+
+# We need to install one handler for each Asterisk server, but only
+# one template.
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.debug=true
+template.templates=date set bsl queue macro debug form misc ast1
+
+# in case our page needs images
+
+file.class=sunlabs.brazil.server.FileHandler
+mime.jpg=image/jpg
+mime.png=image/png
+mime.ico=image/ico
+mime.css=text/css
+
+# use cookies for session state
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=monster
+
+# Each browser needs two sessions, one for user "clicks" (the foreground), 
+# and another for the background fetches.  This is because the Brazil Templates
+# only allow one active "template" page per session.
+#
+# We switch to the background session by prepending "background_" to
+# a URL (and "BACKGROUND." to the session id).
+# - The SimpleSessionHandler create a separate session
+# - The UrlMapperHandler removes the "background_".
+#
+
+background.class=sunlabs.brazil.handler.SimpleSessionHandler
+background.glob=*background_*
+background.value=BACKGROUND.${SessionID}
+background.force=true
+
+# remove the "background_" from the url
+
+map.class=sunlabs.brazil.handler.UrlMapperHandler
+map.match=(.*)background_(.*)
+map.replace=\\1\\2
+
+###################################
+
+# configure a bunch of templates
+#
+# set:  <get> <set> <namespace> <import>
+# bsl:  <if> <else> <foreach> <extract> ...
+# queue: <enqueue> <dequeue>	(Q manipulation/ inter-thread communication)
+# macro: <definemacro>		(markup macros)
+# debug: <debug>		("printf" debugging to console)
+# date:  <date>			(date confersion and arithmatic)
+# misc:  <append> <push> <pop> <increment> <sequence> <expr> <inline>
+#        <eval> <stringop> <mapnames> <random> <stringlength> 
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+bsl.class=sunlabs.brazil.template.BSLTemplate
+queue.class=sunlabs.brazil.template.QueueTemplate
+macro.class=sunlabs.brazil.template.MacroTemplate
+macro.subst=true
+macro.init=init.macros
+debug.class=sunlabs.brazil.template.DebugTemplate
+debug.debug=1
+date.class=sunlabs.brazil.sunlabs.DateTemplate
+misc.class=sunlabs.brazil.sunlabs.MiscTemplate
+form.class=sunlabs.brazil.template.FormTemplate
+
+# This is both a handler (to connect to the AMI), and a template
+# we can monitor/control as many asterisk servers as we like
+
+ast1.class=sunlabs.brazil.asterisk.AsteriskHandler
+ast1.userid=admin
+ast1.password=XXXX
+ast1.queue=ast-pbx1
+ast1.server=pbx1.mydomain.com
+ast1.keepalive=30
+ast1.retry=30
+
+ast2.class=sunlabs.brazil.asterisk.AsteriskHandler
+ast2.userid=admin
+ast2.password=XXXX
+ast2.queue=ast-pbx2
+ast2.server=pbx2.mydomain.com
+ast2.keepalive=30
+ast2.retry=30

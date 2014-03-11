@@ -1,0 +1,64 @@
+log=5
+exitOnError=true
+port=8081
+maxRequests=100
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie map template
+
+
+# Treat validate.html as a template
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.debug=true
+template.templates=set bsl form validate
+
+
+# use cookies for session state
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=validate
+
+# Map all url's to the page template.
+# the "export" option, when used with this "match" expression
+# make everything map to validate.html
+
+map.class=sunlabs.brazil.handler.UrlMapperHandler
+map.match=.*
+map.replace=/validate.html
+
+###################################
+
+# configure a bunch of templates
+#
+# set:  <get> <set> <namespace> <import>
+# bsl:  <if> <else> <foreach> <extract> ...
+# validate <validate>
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+bsl.class=sunlabs.brazil.template.BSLTemplate
+form.class=sunlabs.brazil.template.FormTemplate
+validate.class=sunlabs.brazil.sunlabs.ValidateTemplate
+
+# Validation keys and what they should match
+
+validate.types.1=validate.numeric validate.zipcode validate.arearange
+
+validate.numeric.regex=[0-9]+
+validate.numeric.glob=
+validate.numeric.expr=
+validate.numeric.max=
+validate.numeric.min=
+
+validate.zipcode.glob=[0-9][0-9][0-9][0-9][0-9]
+validate.zipcode.maxlen=5
+validate.zipcode.minlen=5
+
+validate.arearange.expr=query.1 < 50000 && query.1 > 25000
+
+query.2.glob=*@*.*
+query.2.maxlen=30
+query.2.minlen=5

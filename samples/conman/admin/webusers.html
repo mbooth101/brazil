@@ -1,0 +1,44 @@
+<!--
+  vim: filetype=bsl
+-->
+<head>
+<stdinclude>
+<title>Server Properties</title>
+</head>
+<body>
+<import namespace=users />
+
+<if query.message>
+   <qnote session=${query.session} tag="Message" message="${query.message}" >
+   <h2>Message sent to <get query.handle></h2>
+</if>
+
+<if query.boot>
+  <h2><get query.handle> was logged out</h2>
+  <qnote session=${query.session} tag="Message" message="logged out by the administrator" >
+  <lock name=${query.handle}>
+      <set name=user.${query.handle} namespace=users>
+      <set namespace=${query.session} name=userid>
+      <set namespace=BACKGROUND.${query.session} name=userid>
+  </lock>
+</if>
+
+<h2>Active Web users</h2>
+<table border>
+  <tr><th>usr</th><th>Session ID</th><th>Send message</th></th>log out</th></tr>
+  <foreach name=i match="^user[.]([^.]+)$">
+    <tr><td><get name=i.name.1></td><td><get name=i.value></td>
+      <td><form method=post prepend=foo> <!-- without prepend, we pick up the wrong values -->
+        <input name=session type=hidden value=${i.value}>
+        <input name=handle type=hidden value=${i.name.1}>
+        <input name=message size=30>
+      </form></td>
+      <td><form method=post prepend=foo> <!-- without prepend, we pick up the wrong values -->
+        <input name=session type=hidden value=${i.value}>
+        <input name=handle type=hidden value=${i.name.1}>
+        <input type=submit name=boot value="logout">
+      </form></td>
+    </tr>
+  </foreach>
+</table>
+</body>

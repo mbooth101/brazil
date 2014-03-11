@@ -1,0 +1,27 @@
+<title>Testing server restarts</title>
+<!-- use with config.restart -->
+
+<if name=query.submit>
+  <h2>Changing my config file</h2>
+  <set namespace=server name=template.templates value="set bsl date">
+  <set namespace=server name=date.class
+      value=sunlabs.brazil.sunlabs.DateTemplate>
+  Now send the server a SIGHUP, and do a reload
+</if>
+<p>
+The server starts only with the SET and BSL handlers.  So the
+date (from the dateHandler isn't computed)
+<table border>
+<tr><td>
+  The date is: <date>
+</td></tr>
+</table>
+
+<form>
+Click here to add the date handler to the server:
+<input name=submit type=submit value=go>
+</form>
+<h2>Current server properties</h2>
+<foreach name=i glob=* sort>
+<get i.name>=<get i.value><br>
+</foreach>

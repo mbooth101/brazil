@@ -1,0 +1,20 @@
+<head>
+<title>Run some code</title>
+<if query.eval>
+  Ran:
+  <pre class=banner>
+  <get name=query.eval convert=html>
+  </pre>
+  Got:
+  <div class=banner>
+  <eval markup=${query.eval}>
+  </div>
+</if>
+
+<form method=post prepend=query.>
+Enter code to evaluate:<br>
+<textarea name=eval rows=4 cols=45>
+<get name=query.eval default="">
+</textarea><br>
+<input type=submit value=evaluate>
+</form>

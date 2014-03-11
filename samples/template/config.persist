@@ -1,0 +1,44 @@
+# append this configuration file to add persistence to the server
+# make sure to un-comment one of the next 2 lines
+
+# Append this line if you are using "config.main"
+ content.handlers=	local persist poll \
+			content.load content.file content.missing
+# Append this line if you are using "config.main and config.proxy"
+# content.handlers=	local persist poll \
+			content.load proxy content.file content.missing
+
+# Use a persistent session manager to save all
+# session state kept by the SetTemplate.  We'll
+# define a special URL "save_state...." that dumps out all current
+# state, so it may be restored if we re-start the server.
+
+persist.class=sunlabs.brazil.session.PropertiesCacheManager
+persist.storeDir=session_data
+persist.match=/save_state*
+persist.size=5000
+
+# Only allow clients on the local host to access
+# these url's that start with "save".  This keeps arbitrary
+# users from running the state saver
+
+local.class=sunlabs.brazil.handler.RestrictClientHandler
+local.prefix=/save
+local.allow=^(127.0.0.1)$
+
+# Set up a background thread that will issue a url
+# to save the current session state every night.
+# This URL should be issued "by hand" before
+# shutting down the server.
+# - check at least once an hour (interval)
+# - save state at 2300 hours (match) == (format)
+# - send a valid cookie, so the server won't switch to url rewriting
+
+poll.class=sunlabs.brazil.handler.PollHandler
+poll.url=http://localhost/save_state.html
+poll.interval=3500
+poll.format=HH
+poll.match=23
+poll.header=poll
+poll.name=set-cookie
+poll.value=peanutButter=admin

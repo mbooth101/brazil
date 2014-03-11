@@ -1,0 +1,21 @@
+<title>Insert a message</title>
+<h1>Test sending a message to a user</h1>
+
+<if query.conf>
+
+  <!-- extract the conference members -->
+
+  <amicommand server=${system.server} prepend=q
+     action=originate
+     Channel=local/${query.conf}@ami-joinmeeting
+     Application=Agi
+     Callerid=message
+     data="freetts|${query.message}|#"
+  />
+</if>
+<form prepend=query.>
+  Enter conference number:<input name=conf size=3><br>
+  Enter the message to play<input name=message size=40><br>
+  <input type=submit>
+</form>
+<h4><a href=/conf.html>Back to main conference page</a></h4>

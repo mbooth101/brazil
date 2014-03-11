@@ -1,0 +1,10 @@
+<!--
+  This page demonstrates how to force the client to re-authenicate.C,
+  as would be required if the user desires to switch to an alternate id.
+
+  Note we can use "\q" to insert a literal quote (").
+-->
+
+<title>re-authenticate</title>
+<h2>reauthenticate</h2>
+<addheader WWW-authenticate="basic realm=\q${session.realm}\q" status=401>

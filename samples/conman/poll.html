@@ -1,0 +1,52 @@
+<!-- 
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+
+  Gets polled periodically for maintanence operations
+-->
+
+<addheader nocontent>
+<if not name=initialized>
+  <debug "Performing one time initialization">
+  <set namespace=server name=initialized value=true>
+  <namespace name=register load=config.users />
+  <abort>
+</if>
+
+<import namespace=users>
+
+<!--
+  Reap old Queues.
+  When we logoff a user, remember their session.
+  After sufficient message transit time, free-up the queue resources.
+-->
+
+<debug "POLLING for zombies">
+<foreach name=i glob=dead.*>
+  <lock name=${i.name.1}>
+    <if not name=user.${i.name.1} value=${i.value}>
+      <queueinfo name=BACKGROUND.${i.value} remove=true>
+      <debug "Reaping queue for ${i.name}=${i.value}">
+    </if>
+  </lock>
+  <set name=${i.name}>
+</foreach>
+
+<!--
+  Log out expired sessions. 
+-->
+
+<foreach name=i glob=last.*>
+  <expr name=age value="(${headers.timestamp}-${i.value})/60000">
+  <debug ${i.name.1} idle: ${age}/${system.maxidle} min>
+  <if expr="age \g system.maxidle">
+    <set name=dead.${i.name.1} value=${user.${i.name.1}}>
+    <logoff handle=${i.name.1} message="Session Expired">
+    <debug ${i.name.1} logged off, session expired>
+  </if>
+</foreach>

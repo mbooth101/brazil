@@ -1,0 +1,16 @@
+<title>Brazil Language Translation service</title>
+<form>
+Enter text:<input name=text>
+</form>
+<br>
+<if query.text>
+     <include name=test href="http://translate.google.com/translate_t"
+      post="text=${query.text}&langpair=en|es&hl=en" getheaders=got >
+     <extract name=template.test match="PHYSICAL\g([^\l]*)" all>
+
+</if>
+<h2>Translation</h2>
+<hr>
+<foreach name=i glob=* sort>
+<get i.name>: <get name=i.value convert=html><br>
+</foreach>

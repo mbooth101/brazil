@@ -1,0 +1,21 @@
+Sample application for fetching stock quotes and
+computing portfolio values.  This uses persistent browser cookie to
+maintain session state.  This example demonstrates:
+- Using the "PollHandler" to extract content from remote sites
+- Using the "Calculator" to do arithmetic
+- Using templates to generate the layout
+
+Usage:
+  java -jar brazil.jar -c config -c config.stocks
+
+Files:
+  README	This file
+  config	Brazil configuration for this application
+  config.stock	list of stock names and symbols
+  index.html	table of contents page
+  select.html	select stocks names as share amounts in your portfolio
+  stock.html	display all stock values
+  value.html	display the value of my portfolio
+
+See also "../stock-basic" for an alternative mechanism for managing
+sessions.

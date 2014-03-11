@@ -1,0 +1,27 @@
+Sample applications directory for Brazil 2.3
+
+simple
+   This directory contains sample Brazil "demos" that use a single html
+   file.  Each sample (e.g. sample XXX) consists of the file pairs
+   config.XXX and XXX.html.  See the README file for more specifics
+
+
+email im
+   These two examples have been removed from the release.  They
+   were used to demonstrate "Ajax" techniques in Brazil before
+   the advent of XMLHttpRequest().  Browsers have moved on (finally), 
+   so the HTML "style" used in these examples is obsolete.
+
+stock
+stock-basic
+   Simple stock price aquisition and and portfolio tracking
+   These are out-dated, but should still work
+
+template
+   A Brazil "portal", that rewrites all content to a consistent and
+   configurable look and feel. 
+
+conman
+  This is a sample web-based conference manager for the Asterisk PBX.  It
+  It is a bit complex to get going, but if you run Asterisk or participate
+  in many audio meetings, it is worth it.   See the enclosed README

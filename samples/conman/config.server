@@ -1,0 +1,229 @@
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+
+# Brazil server configuration for conference manager system
+#
+# This version doesn't run the background fetches through the filters
+# background path
+#   init - templatehandler - filehandler
+# foreground path
+#   init - filterhandler
+#            content = templatehandler filehandler
+#            filters = ... usual suspects
+
+log=3
+exitOnError=true
+port=8080
+maxRequests=500
+maxThreads=500
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=tts cookie win winmap bg auth ast1 switch bgmap filter file poll
+
+# If we are fetching a "Background" request, just run the template,
+# don't bother with filtering
+
+switch.class=sunlabs.brazil.server.ChainHandler
+switch.glob=*background_*
+switch.handlers=bgmap template file
+
+# non-background requests get filtered
+
+filter.class=sunlabs.brazil.filter.FilterHandler
+filter.handler=filtercontent
+filter.filters=extract replace integrate decomment
+filtering=true
+
+filtercontent.class=sunlabs.brazil.server.ChainHandler
+filtercontent.handlers=template file notfound
+
+# start a freetts server for the "freetts" agi script
+
+tts.class=sunlabs.brazil.slim.TTSServerHandler
+tts.prefix=/synth
+tts.voice.class=com.sun.speech.freetts.en.us.CMUDiphoneVoice
+tts.voice.db=cmu_kal/diphone_units.bin
+tts.encoding=ML8
+tts.format=au
+
+# run a cron job to logout idle sessions
+# If we set the poll interval greater than the dequeue timeout, it
+# becomes easier to reap unused queues.
+# If we "poll" as a background session, we skip the page template, which we don't need
+
+poll.class=sunlabs.brazil.handler.PollHandler
+poll.url=http://${host}:${port}/background_poll.html
+poll.interval=120
+poll.fast=true
+poll.headers=poll.header1
+poll.header1.name=cookie
+poll.header1.value=meetme3=POLL
+poll.noprops=true
+
+# We need to install one handler for each Asterisk server, but only
+# one template.
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates=date set bsl queue macro debug form \
+		   misc ast1 list digest headers script email lock
+
+# in case our page needs images
+
+file.class=sunlabs.brazil.server.FileHandler
+mime.jpg=image/jpg
+mime.png=image/png
+mime.ico=image/ico
+mime.css=text/css
+mime.js=text/javascript
+
+notfound.class=sunlabs.brazil.handler.NotFoundHandler
+
+# use cookies for session state
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=meetme3
+
+# allow each browser window to have its own session
+# Each browser window should have a unique ID incorporated
+# somewhere in the URL.  This ID is tacked on to the end of the session id
+# so each window gets it's own session.  the window id is removed from the
+# url so we don't need to worry about it anymore
+
+win.class=sunlabs.brazil.handler.SimpleSessionHandler
+win.extract=${url}
+win.re=.*[:_]([0-9]+)[:_].*
+win.value=${SessionID}-\\1
+win.force=true
+
+winmap.class=sunlabs.brazil.handler.UrlMapperHandler
+# winmap.match=(.*)(:[0-9]+:)(.*)
+winmap.match=(.*)([:_]([0-9]+)[:_])(.*)
+winmap.export=urlpart
+winmap.replace=\\1\\4
+
+# Each browser needs two sessions, one for user "clicks" (the foreground), 
+# and another for the background fetches.  This is because the Brazil Templates
+# only allow one active "template" page per session.
+#
+# We switch to the background session by prepending "background_" to
+# a URL (and "BACKGROUND." to the session id).
+# - The SimpleSessionHandler create a separate session
+# - The UrlMapperHandler removes the "background_".
+#
+
+bg.class=sunlabs.brazil.handler.SimpleSessionHandler
+bg.glob=*background_*
+bg.extract=BACKGROUND.${SessionID}
+bg.force=true
+
+# remove the "background_" from the url
+
+bgmap.class=sunlabs.brazil.handler.UrlMapperHandler
+bgmap.match=(.*)background_(.*)
+bgmap.replace=\\1\\2
+
+# use digest authentication for administative functions
+
+auth.class=sunlabs.brazil.handler.DigestAuthHandler
+auth.realm=conference administrator/debugger
+auth.credentials=credentials
+auth.prefix=/admin/
+
+###################################
+
+# configure a bunch of templates
+#
+# set:  <get> <set> <namespace> <import>
+# bsl:  <if> <else> <foreach> <extract> ...
+# queue: <enqueue> <dequeue>	(Q manipulation/ inter-thread communication)
+# macro: <definemacro>		(markup macros)
+# debug: <debug>		("printf" debugging to console)
+# date:  <date>			(date conversion and arithmetic)
+# misc:  <append> <push> <pop> <increment> <sequence> <expr> <inline>
+#        <eval> <stringop> <mapnames> <random> <stringlength> 
+# digest <digest> (for digested passwords)
+# headers <addheader> (for redirections, mostly)
+# form: (pre-filling in form values)
+# list <list> (list manipulation)
+# digest <digest> (md5 digests for credentials)
+# script ( ${..} substitution in scripts and stylesheets)
+# email <sendmail> (send email via smtp)
+# lock <lock> ... </lock>
+
+bsl.class=sunlabs.brazil.template.BSLTemplate
+date.class=sunlabs.brazil.sunlabs.DateTemplate
+debug.class=sunlabs.brazil.template.DebugTemplate
+digest.class=sunlabs.brazil.sunlabs.DigestTemplate
+email.class=sunlabs.brazil.handler.SMTPHandler
+form.class=sunlabs.brazil.sunlabs.FormHelpTemplate
+headers.class=sunlabs.brazil.template.AddHeaderTemplate
+list.class=sunlabs.brazil.sunlabs.ListTemplate
+macro.class=sunlabs.brazil.template.MacroTemplate
+macro.init=init.macros
+macro.subst=true
+misc.class=sunlabs.brazil.sunlabs.MiscTemplate
+queue.class=sunlabs.brazil.template.QueueTemplate
+script.class=sunlabs.brazil.template.ScriptEvalTemplate
+set.class=sunlabs.brazil.template.SetTemplate
+set.headers=headers.
+set.query=query.
+set.saveOk=true
+lock.class=sunlabs.brazil.sunlabs.LockTemplate
+# optional filter highlighting
+highlight.class=sunlabs.brazil.template.HighlightTemplate
+highlight.mustHighlight=true
+
+#####################################################################
+# extract the content into request properties.  The content is
+# the page ready to send to the browser: all the markup has been processed
+
+extract.class=		sunlabs.brazil.filter.TemplateFilter
+extract.templates=	sunlabs.brazil.template.ContentTemplate
+
+# stuff the extracted content into a template
+
+replace.class=		sunlabs.brazil.filter.ReplaceFilter
+replace.fileName=	main.template
+
+# Do another processing path to interpolate markup that is in the template
+
+integrate.class=	sunlabs.brazil.filter.TemplateFilter
+integrate.templates=	date set bsl macro debug misc script
+
+decomment.class=	sunlabs.brazil.filter.TemplateFilter
+decomment.templates=	uncomment title set highlight
+
+uncomment.class=sunlabs.brazil.template.DeCommentTemplate
+decomment.disable=false
+
+title.class=sunlabs.brazil.sunlabs.TitleTemplate
+title.config=config.title
+
+# This is both a handler (to connect to the AMI), and a template
+# we can monitor/control as many asterisk servers as we like
+# Make sure the userid/password entries match the setting in manager.conf
+
+ast1.class=sunlabs.brazil.asterisk.AsteriskHandler
+ast1.userid=AMI-NAME
+ast1.password=AMI-PASS
+ast1.queue=ast-pbx1
+ast1.server=localhost
+ast1.keepalive=300
+ast1.retry=120
+
+# You can point to multiple asterisk servers, but only one may be used at a time
+# for the conference interface.  To enable an additional server:
+#  add "ast2" to the handler chain (after ast1)
+#  use "system.server" in config.conman to switch active servers
+
+# ast2.class=sunlabs.brazil.asterisk.AsteriskHandler
+# ast2.userid=admin
+# ast2.password=XXXX
+# ast2.queue=ast-pbx2
+# ast2.server=pbx2.mydomain.com
+# ast2.keepalive=30
+# ast2.retry=60

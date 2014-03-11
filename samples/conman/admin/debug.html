@@ -1,0 +1,86 @@
+<!--
+  vim: filetype=bsl
+ -->
+
+<head>
+<stdinclude>
+<title>Diagnostic stuff</title>
+<foreach name=i glob=registered.* sort>
+  <get i.name>=<get i.value><br>
+</foreach>
+<import namespace=register />
+</head>
+<body>
+
+<if query.edit>
+  <get query.field>
+  <if query.value>
+    <set namespace=register name=registered.${query.field} value=${query.value}>
+    updated
+  <else>
+    <set namespace=register name=registered.${query.field}>
+    removed
+  </if>
+  <br>
+</if>
+
+<h2>Registered users</h2>
+
+<table border>
+  <tr><th>handle</th>
+    <foreach name=i list="email time hint credentials needsvalidation">
+      <th><get i></th>
+    </foreach>
+  </tr>
+
+  <foreach name=id glob=registered.*.time sort>
+    <tr><td><get id.name.1></td>
+    <foreach name=i list="email time hint credentials needsvalidation">
+      <td><get name=registered.${id.name.1}.${i}></td>
+    </foreach>
+    </tr>
+  </foreach>
+</table>
+
+<if name=url.orig glob=/admin*>
+  <h2>Edit a field</h2>
+  <form method=post>
+    handle.field:<input name=field title=props>value (empty to remove):<input name=value title=propvalue>
+    <input type=submit value=update name=edit>
+  </form>
+</if>
+<a href=/index.html>home</a>
+
+<h2>active conferences</h2>
+<getconfs>
+<amicommand server=${system.server} prepend=q action=command command="meetme">
+<extract all=true name=q.data prepend=get
+  match="\n([0-9]+)[ \t]+0*([0-9]+)[ \t]+([^ \t]+)[ \t]+([0-9:]+)[^\n]*"
+  map="num count marked age"
+>
+<set namespace=local name=cols value="num title count age owner admins">
+
+<table border>
+ <tr>
+   <foreach name=i property=cols>
+     <th><get i></th>
+   </foreach>
+ </tr>
+ <foreach name=i glob=get.*.num sort numeric>
+   <tr>
+     <!-- get conference properties out of our database -->
+     <dbshow family=conf${i.value}>
+     <extract name=db.data prepend=info match="[^\n]*/([^ ]+) *: *([^\n]+)\n"
+       map="key value" all=true
+     >
+     <foreach name=j property=info.matchlist>
+       <set name=get.${i.name.1}.${info.${j}.key} value=${info.${j}.value} convert=trim>
+     </foreach>
+
+     <foreach name=col property=cols>
+       <td><get name=get.${i.name.1}.${col}></td>
+     </foreach>
+   </tr>
+ </foreach>
+</table>
+</body>

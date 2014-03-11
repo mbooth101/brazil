@@ -1,0 +1,24 @@
+# Configuration for demonstrating how form data gets reflected into the Server
+# and made avaliable for application processing, independent of the style of form submission
+
+handler=	sunlabs.brazil.template.TemplateHandler
+templates=	set bsl
+
+bsl.class=	sunlabs.brazil.template.BSLTemplate
+set.class=	sunlabs.brazil.template.MultipartSetTemplate
+set.query=	query.
+
+# maximum size of data accepted by the server
+set.maxPost=	20000
+# A field name (usually a hidden field) whose name triggers the next
+# file to be saved
+set.savePattern=save*
+# The name of the file to save (default is indicated and commented out)
+# set.saveName=${prefix}${fieldName}-${fileName}
+
+# mime types for uploading form/multipart files
+
+mime.java=	text/plain
+mime.txt=	text/plain
+mime.cfg=	text/plain
+mime.html=	text/html

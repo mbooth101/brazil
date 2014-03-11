@@ -1,0 +1,24 @@
+# test the AfterTemplate
+
+log=3
+port=6667
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie template
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.debug=true
+template.templates=set bsl after debug
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+set.track=true
+
+bsl.class=sunlabs.brazil.template.BSLTemplate
+debug.class=sunlabs.brazil.template.DebugTemplate
+debug.debug=1
+after.class=sunlabs.brazil.sunlabs.AfterTemplate

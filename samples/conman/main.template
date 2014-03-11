@@ -1,0 +1,89 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  main template
+  vim: filetype=bsl
+-->
+<if notemplate>
+  <get all>
+  <abort>
+</if>
+<head>
+  <title><get system.name>: the Asterisk meetme conference manager</title>
+  <link rel="stylesheet" type="text/css" href="/${system.style#style}.css" title="default"> 
+  <script language="javascript" src="/std.js"></script>
+  <script eval>${script}</script>
+  <style eval>${style}</style>
+</head>
+<tag name=body> <get name=bodyArgs default=""> title="main template"</tag>
+
+<table width=100%>
+  <colgroup>
+    <col width=0*>
+    <col width=*>
+  </colgroup>
+  <tr>
+    <td colspan=2 class=banner>
+      <span class=caption title="page function"><get system.name> <get title></span>
+      <if userid>
+         [<get system.number>]
+        screen name: <b title="your screen name"><get userid></b>
+      <else>
+        (not signed in)
+      </if>
+    </td>
+  </tr>
+  <tr>
+
+    <!-- navigation buttons -->
+
+    <td class="banner notop" title="navigation bar">
+      <tab tag=home url=index title="main page">
+      <if userid>
+        <tab tag=manage url=confadmin-simple title="create or modify conference properties">
+        <tab tag=select url=conf title="choose a conference to monitor">
+	<if confno>
+          <tab tag=monitor url=${system.meetme} title="monitor a conference">
+	</if>
+        <tab tag=preferences url=userprefs title="set preferences">
+        <tab tag=logout url=logout title="sign off">
+      <else>
+        <tab tag=signup url=signup title="create a new user account (screen name)">
+        <tab tag=login url=login title="sign on">
+      </if>
+      <if system.admin.show>
+        <tab tag=admin url=admin/index title="site administration">
+      </if>
+    </td>
+
+    <!-- page content -->
+
+    <td>
+      <div class=content>
+	<content><get content></content>
+      </div>
+    </td>
+  </tr>
+
+  <!-- the page footer -->
+
+  <tr title="page footer">
+    <td colspan=2>
+      <table width=100%>
+        <colgroup span=2></colgroup>
+	<tr>
+          <td align=left title="all rights reserved">Copyright (c) 2007 Sun Microsystems.</td>
+          <td align=right>
+	    <a href="http://www.experimentalstuff.com/Technologies/Brazil/index.html"
+	     target=Brazil><img src=/images/BrazilPowered.gif title=brazil></a>
+	  </td>
+	</tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>

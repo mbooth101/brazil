@@ -1,0 +1,42 @@
+<!--
+  vim: filetype=bsl
+-->
+
+<head>
+<stdinclude>
+<title>Namespace Properties</title>
+</head>
+<body>
+
+<form prepend=query.>
+  Namespace:<input name=namespace value="">
+</form>
+
+<if query.namespace>
+
+  <foreach name=i glob=query.mod.*>
+    <if name=i.value match="^$">
+      <set namespace=${query.namespace} name=${i.name.1}>
+      - clearing <get i.name.1><br>
+    <else>
+      <set namespace=${query.namespace} name=${i.name.1} value=${i.value}>
+      - setting <get i.name.1><br>
+    </if>
+  </foreach>
+
+  <h1>properties for <get query.namespace></h1>
+  <import namespace=${query.namespace} />
+
+  <table>
+  <foreach name=i match=. namespace=${query.namespace} sort>
+    <tr>
+      <td><get i.name></td>
+      <td>
+        <form method=post prepend=foo style='display: inline;'>
+          <input name=mod.${i.name} value=${i.value} size=40>
+	  <input name=namespace type=hidden value=${query.namespace}>
+        </form>
+      </td>
+  </foreach>
+  </table>
+</if>

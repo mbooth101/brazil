@@ -1,0 +1,146 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+
+  current db settings as of: Mon Sep 11 2006
+  conf${conf}/opts=opts	meetme options if no password is required
+  conf${conf}/${pass}opts=opts	These are the meetme options to use for this password
+  conf${conf}/conf=conf	This is the "real conference number" to map to
+  conf${conf}/title	The conference title
+             /owner     The web site owner of the conference
+	     /admins	List of web site users with admin privileges
+	     /conf	The actual meetme conference #, if any
+	      k
+-->
+<cookiecheck>
+<uniquewindows>
+<head>
+<title>Create a conference</title>
+<stdinclude hasform=true>
+<style eval=true>
+  .error { background-color: #F00; }
+  .info { background-color: #F0F; }
+  .notice { background-color: #FF0; }
+</style>
+</head>
+<body>
+<checklogin>
+<uniquewindows>
+<h1>Conference Registration page</h1>
+NOTE: This page is not working.  Use the
+<a href=/confadmin-simple.html${urlpart.2}>Advanced conference administation</a> page
+instead
+<p>
+<if query.confno>
+  <amicommand server=${system.server} prepend=q
+      action=command
+      command="database show \qconf${query.confno}\q"
+  >
+  <extract name=q.data prepend=conf
+   match="/([^/]*)/([^ ]*) *: *([^ \n]*) *\n"
+   map="family key value"
+   all=true
+  >
+  <if conf.matchlist>
+    <foreach name=i property=conf.matchlist>
+      <get name=conf.${i}.key>=<get name=conf.${i}.value><br>
+    </foreach>
+  <else>
+    Conference <b><get query.confno></b> doesn't exist,
+    <set name=createme value=${query.confno}>
+    <form method=post>
+      <input type=submit name=create
+        value="Create conference ${query.confno}"
+	title=createconf
+      >
+  </if>
+  <hr>
+</if>
+<set name=createme>
+<if query.submit>
+  <foreach name=i glob=query.* sort>
+  <get i.name.1>=<get i.value><br>
+  </foreach>
+</if>
+<form prepend=query. method=post  help="do_help(%)" event=onmouseover>
+Enter a conference number to create or edit:
+<input name=confno size=5
+ help="Eventually, each user will be assigned a conference number\lbr\gbut for now you can pick one"
+ title=createconf
+>
+</form>
+<hr>
+<form prepend=query. method=post  help="do_help(%)" event=onmouseover>
+<table border>
+  <tr><th colspan=2>General conference options</th></tr>
+  <tr><td>New participant notification</td>
+    <td>
+      <input type=radio name=notify value="g"
+        help="No indications will be make when users join or leave\lbr\gthe conference"
+      > none
+      <input type=radio name=notify value="-" checked
+        help="Join and leave beeps will be played"
+      > beep
+      <input type=radio name=notify value="i"
+        help="Before joining the conference, users will be promped\lbr\gto record their names.\lbr\gThe recording will be played when they join or leave\lbr\gthe conference"
+      > announce
+    </td>
+  </tr>
+  <tr><td>Record conference</td>
+    <td>
+      <input type=radio name=record value="r"
+        help="This conference will be recorded"
+      > yes
+      <input type=radio name=record value="-" checked
+        help="No recording of this conference will be made"
+      > no
+    </td>
+  </tr>
+  <tr><td>Play Musak</td>
+    <td>
+      <input type=radio name=moh value="m" checked 
+        help="When only one participant is in the conference,\lbr\gmusic will play in the background"
+      > yes
+      <input type=radio name=moh value="-"
+        help="No music will play in the background when the conference\lbr\gonly has one memeber"
+      > no
+    </td>
+  <tr><td>conference availability</td>
+    <td>
+      start date:<input name=start
+        help="this field is not used"
+      ><br>
+      duration:<input name=duration
+        help="this field is not used"
+      >
+    </td>
+  <tr><th colspan=2>Participant options</th></tr>
+  <tr><td>join mode</td>
+    <td>
+      <input type=radio name=join value="-" checked
+        help="Users will enter the conference NOT muted"
+      >normal
+      <input type=radio name=join value="m"
+        help="Users will join the conference muted,\lbr\gand will need to use the conference menu\lbr\gto unmute them selves"
+      >muted
+      <input type=radio name=join value="l"
+        help="The audio will be played to this user"
+      >talk only
+    </td>
+  </tr>
+  <tr><th colspan=2><input type=submit name=submit value=submit
+        help="This sets the conference options"
+  ></th></tr>
+  <tr><td colspan=2>
+    <div id=help norewrite=true class=help title="field help"></div>
+  </td></td>
+</table>
+</form>
+<div id=status>status</div>
+<a href=/index.html>home</a><br>
+</body>

@@ -1,0 +1,38 @@
+# start a pair of servers, one "http", the other "https" that share
+# a common configuration file.
+# to start:
+# echo "testing" | java -classpath ../classes sunlabs.brazil.server.Main -x \
+# 	-c config.basicssl ssl.enable true -s \
+# 	-D 5 -c config.basic ssl.enable false
+# To create a keystore for this example, run:
+#   keytool -genkey -keystore sampleStore -keyalg RSA
+# and provide the password "testing"
+# A jvm1.3+ is required.
+
+handler=main
+log=5
+port=9000
+sslport=9443
+
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=ssl cookie template
+
+ssl.class=sunlabs.brazil.ssl.BasicSSLHandler
+#  This is set from the command line
+#ssl.enable=true
+ssl.store=sampleStore
+#  Normally, it's a bad idea to specify the clear-text password directly
+#ssl.password=testing
+#  Read the password from "stdin"
+ssl.password=@-
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates=template.set template.bsl template.subst
+template.debug=true
+template.set.class=sunlabs.brazil.template.SetTemplate
+template.set.query=query.
+template.set.headers=header.
+template.bsl.class=sunlabs.brazil.template.BSLTemplate
+template.subst.class=sunlabs.brazil.sunlabs.SubstAllTemplate

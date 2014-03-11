@@ -1,0 +1,31 @@
+<title>My Stock Portfolio</title>
+<body bgcolor=white>
+<import namespace=stock>
+<h1>My Stocks</h1>
+  <table border>
+     <tr><th>name</th><th>symbol</th><th>price</th><th>last update</th>
+	 <th>shares</th><th>value</th></tr>
+    <foreach name=id glob=myStock.* sort>
+      <tr>
+	<td><property name=stock.${id.name.1}></td>
+	<td><property name=id.name.1></td>
+	<if name=extract.${id.name.1}.price>
+          <td><get name=extract.${id.name.1}.price></td>
+          <td><get name=extract.${id.name.1}.time>-<get name=extract.${id.name.1}.date></td>
+          <td><get name=${id.value}></td>
+          <td><get name="x = id.value * extract.${id.name.1}.price">
+	  <set local name=sum value="${sum + x}">
+	  </td>
+	<else>
+	  <td colspan=4 align=center>N/A</td>
+	</if>
+      </tr>
+    </foreach>
+  </table>
+  Total portfolio value: <b><get sum></b>
+<hr>
+<a href=/index.html>home</a> |
+<a href=/select.html>select stocks</a> |
+<b>my portfolio</b> |
+<a href=/stock.html>all stocks</a>
+</body>

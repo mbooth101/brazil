@@ -1,0 +1,87 @@
+<!--
+  vim: filetype=bsl
+-->
+
+<head>
+<title>Asterisk Database interface</title>
+<stdinclude>
+</head>
+<body>
+<h1>Asterisk Database viewer</h1>
+
+<!-- compute the possible asterisk servers to query -->
+<if not name=asterisk_servers>
+  (computing server list)<br>
+  <foreach name=i glob=*.class>
+    <if name=i.value glob="*AsteriskHandler">
+      <append name=servers delim=" " value=${i.name.1}>
+    </if>
+  </foreach>
+  <set name=asterisk_servers value=${servers}>
+</if>
+
+<form prepend=query.>
+  choose server:
+  <select name=server>
+    <foreach name=i property=asterisk_servers>
+      <option value=${i}><get name=${i}.server>
+    </foreach>
+  </select>
+  select family: <input name=family title=astfamily>
+  <input name=submit value=yes type=hidden>
+</form>
+
+<if query.submit>
+  <if query.edit>
+    <if name=query.value glob="?*">
+      <amicommand server=${${query.server}.queue} prepend=q
+        action=command
+        command="database put \q${query.family}\q \q${query.key}\q \q${query.value}\q" 
+      >
+      (added/changed <b><get query.key>=<get query.value></b>)<br>
+    <else>
+      <amicommand server=${${query.server}.queue} prepend=q
+        action=command
+        command="database del \q${query.family}\q \q${query.key}\q" 
+      >
+      (key <b><get query.key></b> deleted)<br>
+    </if>
+  </if>
+  <if query.family>
+    <amicommand server=${${query.server}.queue} prepend=q
+      action=command
+      command="database show \q${query.family}\q"
+    >
+  <else>
+    <amicommand server=${${query.server}.queue} prepend=q
+      action=command command="database show"
+    >
+    <set namespace=local name=query.family value=*>
+  </if>
+
+  <if q.error>
+    <h2> Oops! <Get q.error></h2>
+    <abort>
+  </if>
+  <h2>Database entries for family "<get query.family>" on "<get name=${query.server}.server>"</h2>
+  <table border>
+    <tr><th>key</th><th>value</th></tr>
+    <foreach name=i property=q.data delim="\n">
+      <extract name=i glob="/${query.family}/* : *">
+      <stringop name=i.1 trim=both>
+      <stringop name=i.2 trim=both>
+      <tr><td><get i.1></td><td><get i.2></td></tr>
+    </foreach>
+    </td></tr>
+  </table>
+  <if name=url.orig glob=/admin*>
+    <form method=post prepend=query.>
+      Add, edit or delete key (leave value empty to delete):<br>
+      <input name=key>=<input name=value>
+      <input type=hidden name=family value=${query.family}>
+      <input type=hidden name=server value=${query.server}>
+      <input type=submit name=edit value=update>
+    </form>
+  </if>
+</if>
+</body>

@@ -1,0 +1,18 @@
+<h2>Testing the RexxShell</h2>
+<rexxshell>
+say 'This will set some properties'
+
+props=PropertiesList req.props
+props.put("rx.prop1", "alpha");
+props.put("rx.prop2", "beta");
+
+</rexxshell>
+
+<hr>
+<b>Request.props</b><br>
+<foreach name=i glob=* sort>
+   <get i.name> = <get i.value><br> 
+</foreach>
+<hr>
+<font size = 2><i>As of: <get name=headers.timestamp></i></font>
+<hr>

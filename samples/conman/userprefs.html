@@ -1,0 +1,125 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+  Set user icon mapping preferences.
+
+  user.icon.${calleridnum}=icon
+  vim: filetype=bsl
+-->
+<head>
+  <title>Preferences</title>
+  <uniquewindows>
+  <checklogin goto=/conf.html>
+  <stdinclude>
+</head>
+<body>
+<import namespace=user_${userid}>
+
+<!-- process the form -->
+
+<if query.save>
+  <namespace name=user_${userid} store=preferences/${userid}.prefs />
+  <h2>Saving preferences</h2>
+<elseif query.updateuser>
+  <if name=query.icon value="(remove)">
+    <set namespace=user_${userid} name=user.icon.${query.updateuser}>
+    <set namespace=user_${userid} name=user.name.${query.updateuser}>
+  <else>
+    <set namespace=user_${userid} name=user.icon.${query.updateuser} value=${query.icon}>
+    <set namespace=user_${userid} name=user.name.${query.updateuser} value=${query.name}>
+  </if>
+</if>
+
+<table title="phone book">
+  <caption>manage phone book</caption>
+  <tr><th>Caller id<br><number</th><th>name</th><th>icon</th><th>update</th></tr>
+  <foreach name=i glob=user.icon.* sort=${i.name.1} numeric>
+    <tr>
+      <form method=post>
+        <td><get i.name.1></td>
+        <td><input name=name size=12 value="${user.name.${i.name.1}}"></td>
+        <td>
+	  <set namespace=local name=icon value="${i.value}" default=${icon}>
+	  <select name=icon>
+	    <foreach name=image list="(remove) baby cdog dog face beer">
+	      <option value="${image}"><get image>
+	    </foreach>
+	  </select>
+        </td>
+	<td><input type=submit value=update title="update entry"></td>
+	<input type=hidden name=updateuser value=${i.name.1}>
+	</td>
+      </form>
+    </tr>
+  </foreach>
+  <tr><th colspan=4>Add new phone entry</th></tr>
+  <tr>
+    <form method=post>
+      <td><input name=updateuser value="${query.add}" size=10 title="caller id number" ></td>
+      <td><input name=name value="" size=12 title="caller name" ></td>
+      <td>
+        <select name=icon>
+	  <foreach name=image list="baby cdog dog face beer">
+	     <option><get image>
+	  </foreach>
+        </select>
+      </td>
+      <td>
+        <input type=submit name=create value=create title="create a new entry">
+      </td>
+    </form>
+  </tr>
+  <tr><th colspan=3>
+    <form>
+      <input type=submit name=save value=save title="remember on server">
+    </form>
+    </th></tr>
+</table>
+
+<h2>Misc preferences</h2>
+
+<if query.replace.fileName>
+   <set name=replace.fileName value=${query.replace.fileName}>
+   <span class=message>Setting template to <b><Get query.replace.fileName></b></span><br>
+</if>
+
+<foreach name=i glob=query.style.*>
+  <set name=style.${i.name.1} value=${i.value}>
+  <span class=message>Setting <b><get i.name.1>=<get i.value></span><br>
+</foreach>
+
+<foreach name=i glob=query.system.*>
+  <set name=system.${i.name.1} value=${i.value}>
+  <span class=message>Setting <b><get i.name.1>=<get i.value></span><br>
+</foreach>
+   
+<form method=post prefix="" style="display: inline;">
+choose site template:
+  <select name=replace.fileName>
+    <option value="main.template">table based page template
+    <option value="min.template">Minimum template
+  </select>
+  <input type=submit value="change page template">
+</form>
+<br>
+<form method=post prefix="" style="display: inline;">
+  table borders (for diagnostics)
+  <select name=style.border.width>
+    <option value="0">normal
+    <option value="3">diagnostic
+  </select>
+  <input type=submit value="change borders">
+</form>
+<br>
+<form method=post prefix="" style="display: inline;">
+  show admin tab
+  <select name=system.admin.show>
+    <option value="0">no
+    <option value="1">yes
+  </select>
+  <input type=submit value="change tab">
+</form>
+</body>

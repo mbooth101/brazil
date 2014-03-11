@@ -1,0 +1,79 @@
+<head>
+<title>Stock Portfolio registration</title>
+</head>
+<body bgcolor=white>
+
+<!--
+  Check registration data if form submitted.
+  If the registration data is invalid, set "message", and redraw
+  the form, displaying "message".
+-->
+
+<if query.register>
+  <import namespace=accounts>
+  <if name=auth.${query.id}>
+    <set local name=message value="Sorry, id has already been taken">
+  <elseif not name=query.id match="[a-zA-Z][a-zA-Z0-9_+-]*">
+    <set local name=message value="invalid user id">
+  <elseif name=query.pass1 value="">
+    <set local name=message value="No password entered">
+  <elseif not name=query.pass1 value=${query.pass2}>
+    <set local name=message value="Password Mis-Match">
+  <else>
+    <!--
+      The form has ben validated
+
+      We need to compute the base64 encoded password to use as the
+      key for the authorization table.  Escape to tcl to compute the
+      value, then put the result in "auth" so we can access it with "get"
+    -->
+    <tcl eval>
+      set auth [java::call sunlabs.brazil.util.Base64 encode \
+	"${query.id}:${query.pass1}"]
+      [java::field $request props] put auth $auth
+    </tcl>
+    <set name=auth.${query.id} value=1 namespace=accounts>
+    <set name=${auth} value=${query.id} namespace=accounts>
+    <h1>Welcome <get query.id></h1>
+    <p>
+    You are now a registered member of this site.
+    Make sure to remember your name and password for future
+    use.  To begin,
+    <a href=/my_select.html>Create your portfolio</a>.
+    <p>
+    If you are not currently an authorized user,
+    you will be prompted for your <b>id</b> and <b>password</b>.
+    <p>
+    If you are already authenticated, and have just created a new account, 
+    you will be re-prompted the next time you start your browser.
+    <abort>
+  </if>
+</if>
+
+<h1>Create a new account</h1>
+<h2><font color=orange><get name=message default=""></font></h2>
+<form method=post>
+<table border=1>
+  <tr>
+    <td>Choose a user id</td>
+    <td><input name=id value=${query.id#}></td>
+  </tr>
+  <tr>
+    <td>Pick a password</td>
+    <td><input type=password name=pass1></td>
+  </tr>
+  <tr>
+    <td>Re-enter your password</td>
+    <td><input type=password name=pass2></td>
+  </tr>
+</table>
+<input type=hidden name=register value=1>
+<input type=submit value="Register">
+</form>
+
+<hr>
+<a href=/index.html>home</a> |
+<a href=my_select.html>select stocks</a> |
+<a href=/my_value.html>my portfolio</a> |
+<a href=/my_stock.html>all stocks</a>
+</body>

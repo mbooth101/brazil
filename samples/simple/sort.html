@@ -1,0 +1,38 @@
+<title>Test BSL sorting functions</title>
+<body bgcolor=white>
+<h2>all properties - random order</h2>
+<foreach name=i glob=name.*.*>
+<get i.name> (<get i.name.1>, <get i.name.2>) = <get i.value><br>
+</foreach>
+
+<h2>all properties - default sort</h2>
+<foreach name=i glob=name.*.* sort>
+<get i.name> (<get i.name.1>, <get i.name.2>) = <get i.value><br>
+</foreach>
+
+<foreach name=numeric list="false true">
+  <foreach name=reverse list="false true">
+    <h2>all properties - sort by value (numeric=<get numeric>, reverse=<get reverse>)</h2>
+    <foreach name=i glob=name.*.* sort="${i.value}" numeric=${numeric} reverse="${reverse}">
+      <get i.name> (<get i.name.1>, <get i.name.2>) = <get i.value><br>
+    </foreach>
+
+    <h2>all properties - sort by index:1 (numeric=<get numeric>, reverse=<get reverse>)</h2>
+    <foreach name=i glob=name.*.* sort="${i.name.1}" numeric=${numeric} reverse="${reverse}">
+      <get i.name> (<get i.name.1>, <get i.name.2>) = <get i.value><br>
+    </foreach>
+
+    <h2>all properties - sort by index:1-value (numeric=<get numeric>, reverse=<get reverse>)</h2>
+    <foreach name=i glob=name.*.* sort="${i.name.1 - i.value}"
+         numeric=${numeric} reverse="${reverse}">
+      <get i.name> (<get i.name.1>, <get i.name.2>) = <get i.value> (<get name="${i.name.1 - i.value}">)<br>
+    </foreach>
+  </foreach>
+</foreach>
+
+<h2>sort by weird stuff - numeric</h2>
+<foreach name=i glob=name.*.a sort="${name.${i.name.1}.a * name.${i.name.1}.b}" numeric>
+  <get i.name.1>: <get name=name.${i.name.1}.a>,<get name=name.${i.name.1}.b> =
+  <get name="${name.${i.name.1}.a * name.${i.name.1}.b}"><br>
+</foreach>
+</body>

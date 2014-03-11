@@ -1,0 +1,128 @@
+<h1>Test the Misc Template</h1>
+This page is a sampling of the <b>sunlabs.brazil.sunlabs.MiscTemplate</b>.
+You should look at the source to see the markup that is generating this
+page.
+
+<h2>case conversion</h2>
+<foreach name=i list="upper lower title">
+  <set namespace=local name=test value="THIS is a tEst">
+  <get i>: <get test> =&gt;
+  <stringop name=test case=${i}>
+  <get test><br>
+</foreach>
+
+<h2>Ranges</h2>
+<foreach name=i list="2,4 3,-2 3 -3 6,100 foo">
+  <set namespace=local name=test value="0123456789112345678921234567893">
+  range(<get i>): <get test> =&gt; 
+  <stringop name=test range="${i}">
+  <get test><br>
+</foreach>
+
+<h2>Trimming</h2>
+<foreach name=i list="left right both true false pickle">
+  <set namespace=local name=test value="  test  ">
+  &lt;stringop trim="<get i>"&gt;
+  [<get test>] =&gt;
+  <stringop name=test trim=${i}>
+  [<get test>]<br>
+</foreach>
+
+<h2>String conversion</h2>
+converting: "\lb\gbold\l/b\g  and \a or \q bla.":<br>
+<foreach name=i list="html url banana">
+  <set namespace=local name=test value="\lb\gbold\l/b\g  and \a or \q bla.">
+  * <get i>: <stringop name=test convert=${i}> (<get test>)<br>
+</foreach>
+
+<h2>Map names</h2>
+&lt;mapnames src=header.* dst=TEST${mapCount}-(${0})-${1} case=upper&gt;<br>
+<mapnames src=header.* dst=TEST${mapCount}-(${0})-${1} case=upper>
+
+<foreach name=i match="^(TEST|header)" sort>
+  <get i.name>=<get i.value><br>
+</foreach>
+
+<h2>Sequences</h2>
+
+<sequence name=seq0 count=10>
+&lt;sequence count=10&gt;: <get seq0><br>
+<sequence name=seq1 count=5 start=2 incr=3>
+&lt;sequence count=5 start=2 incr=3&gt;: <get seq1><br>
+&lt;sequence  count=7 start=foo delim=,&gt;: 
+<sequence name=seq3 count=7 start=foo delim=,><get seq3><br>
+
+<h2>Increment</h2>
+<sequence name=foo count=10>
+<set local name=incr value=start>
+start with "<get incr>":<br>
+<foreach name=i property=foo>
+   <increment name=incr incr=${i}>
+   <get i> <get incr><br>
+</foreach>
+
+<h2>Expressions</h2>
+
+7 *(2 + 3) / 4 = <expr value="7 *(2 + 3) / 4"><br>
+<sequence name=a count=10 delim=" + ">
+<get a>: <expr value="${a}"><br>
+
+<h2>append</h2>
+<sequence name=a count=10>
+<foreach name=i property=a>
+  <append name=append value=${i} delim="/"><get append><br>
+</foreach>
+
+<h2>Random</h2>
+<sequence name=a count=10>
+
+(-2 + [0-9]) = 
+<foreach name=i property=a>
+  <random count=10 start=-2>
+</foreach><br>
+(foo + [0-100] alpha) = 
+<foreach name=i property=a>
+  <random count=100 start=foo type=alpha>
+</foreach><br>
+(100 + [0-100] hex) = 
+<foreach name=i property=a>
+  <random count=100 start=100 type=hex>
+</foreach><br>
+
+<h2>inline</h2>
+<inline name=inline>
+  This is inline content
+  <b> This is bold </b> and I am on port. ${port}
+  The end
+</inline>
+<dl>
+<dt>inlined content (as entered)</dt>
+<dd><pre><get name=inline convert=html></pre>
+<dt>inlined content</dt>
+<dd><get inline>
+<dt>converted to title case
+<stringop name=inline case=title>
+<dd><get inline>
+<dt>"eval=true" turned on
+<dd>
+<inline eval=true>
+  This is inline content
+  <b> This is bold </b> and I am on port. ${port}
+  The end
+</inline>
+</dl>
+<h2>eval</h2>
+<inline name=eval>
+  <foreach name=i list="a b c d">
+    <append name=z value="${i}" delim=_><get name=z>,
+  </foreach>
+</inline>
+inline content:
+<pre><get name=eval convert=html></pre>
+after "eval":<br>
+<eval markup=${eval}><br>
+<eval markup=${eval} atEnd=true>
+<p>
+Eval can defer markup evaluation to the end of the page, 
+using "atEnd=true".  We repeated the "eval" above that way.
+<p>

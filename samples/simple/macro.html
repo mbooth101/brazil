@@ -1,0 +1,59 @@
+<title>Testing macros</title>
+
+<!-- this could be a chess board -->
+
+<definemacro name=board>
+   <table border>
+   <foreach name=row list="A B C D E F G H">
+      <tr><foreach name=col list="1 2 3 4 5 6 7 8">
+	 <td><${fill#fill}></td>
+      </foreach></tr>
+    </foreach>
+  </table>
+</definemacro>
+
+<!-- default "fill" routine for cells -->
+
+<definemacro name=fill>
+   <get row>-<get col><br>
+   piece goes here
+</definemacro>
+
+<!-- another fill routine for cells -->
+
+<definemacro name=test>
+   <get col>/<get row>
+</definemacro>
+
+<hr>
+<board>
+<board fill=test>
+<hr>
+
+<!-- 
+    Dump the current macros.  The template doesn't supply a built-in
+    "dump" routine, but the table the macros are stored in is public,
+    so we can find it and save it in a script. [NOTE: as of release 2.1
+    the initial macros table does not need to be in properties format, so
+    you don't need to do this anymore.]
+-->
+<if query.save>
+   <bsh eval>
+      import sunlabs.brazil.session.SessionManager;
+      import sunlabs.brazil.template.Template;
+
+      prefix = "template.";	// The TemplateHandler prefix
+      index = 5;			// Which template is the MacroTemplate
+      saveto= "${query.save}";	// where to save the macros
+
+      templates = (Vector) SessionManager.getSession("${SessionID}",
+	   prefix + "template", Vector.class);
+      Template t = (Template) templates.elementAt(index);
+      t.macroTable.save(new FileOutputStream(saveto), "${query.title#}");
+   </bsh>
+   Macro table saved to <get query.save>
+</if>
+<form>
+save macros:
+<input name=save>
+</form>

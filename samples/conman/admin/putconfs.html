@@ -1,0 +1,44 @@
+<head>
+<title>Update Asterisk database from conference cache</title>
+</head>
+<body>
+This reads the cached  "conferences.txt", and stuffs it into the asterisk
+database
+
+<!-- compute the possible asterisk servers to query -->
+<if not name=asterisk_servers>
+  (computing server list)<br>
+  <foreach name=i glob=*.class>
+    <if name=i.value glob="*AsteriskHandler">
+      <append name=servers delim=" " value=${i.name.1}>
+    </if>
+  </foreach>
+  <set name=asterisk_servers value=${servers}>
+</if>
+
+<if query.file>
+  <namespace name=temp clear=true />
+  <namespace name=temp load=admin/${query.file}>
+  <import namespace=temp>
+  <ul>
+  <foreach name=i glob=conf.*.*>
+    <dbput family=conf${i.name.1} key=${i.name.2} value=${i.value} />
+    <li>putting: /conf<get i.name.1>/<get i.name.2> : <get i.value>
+  </foreach>
+  </ul>
+</if>
+
+<form prepend=query.>
+  choose server:
+  <select name=server>
+    <foreach name=i property=asterisk_servers>
+      <option value=${i}><get name=${i}.server>
+    </foreach>
+  </select>
+  select file:
+    <input name=file
+     title="file to upload - make sure you mean it!"
+     value=conferences.txt
+    >
+</form>
+</body>

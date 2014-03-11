@@ -1,0 +1,32 @@
+<!-- 
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+
+  Logout a user
+-->
+<head>
+<title>log out a user</title>
+</head>
+
+<body>
+<if userid>
+  <set namespace=local name=handle value=${userid}>
+  <import namespace=users />
+  <logoff message="logged out">
+  <h2>Good Bye <get handle></h2>
+  <foreach name=i glob=user.*> <!-- duplicate code from login.html XXX -->
+    <qnote session=${i.value}
+     tag="Goodbye"
+     message="${handle} logged off"
+    >
+  </foreach>
+  <addheader location=/login.html${urlpart.2}?handle=${handle}>
+<else>
+  <addheader location=/login.html${urlpart.2}>
+</if>
+</body>

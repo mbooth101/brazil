@@ -1,0 +1,17 @@
+# Test the Bean Shell template
+#
+log=5
+port=5555
+
+handler=sunlabs.brazil.server.ChainHandler
+handlers=sunlabs.brazil.handler.SimpleSessionHandler template
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= set bsl bean
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=Query.
+
+bsl.class=sunlabs.brazil.template.BSLTemplate 
+
+bean.class=sunlabs.brazil.beanshell.BeanShellTemplate

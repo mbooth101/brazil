@@ -1,0 +1,20 @@
+# config file for playing with server restarting
+
+log=5
+exitOnError=true
+port=2345
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=restart template file
+
+restart.class=sunlabs.brazil.sunlabs.RestartHandler
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates = set bsl
+bsl.class=sunlabs.brazil.template.BSLTemplate
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+
+file.class=sunlabs.brazil.server.FileHandler

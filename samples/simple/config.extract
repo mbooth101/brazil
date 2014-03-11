@@ -1,0 +1,12 @@
+# Test the BSL extract tag
+#
+
+log=5
+port=5555
+
+handler=template
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= \
+   sunlabs.brazil.template.SetTemplate \
+   sunlabs.brazil.template.BSLTemplate 

@@ -1,0 +1,21 @@
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+
+# firefox balloon help
+# title.<id> will be the help text
+
+# this uses the old ID template
+title.append=meeting events
+title.menu=links to other pages
+title.syn=link status
+title.state=fetching: waiting for an event from the server
+title.status=system status
+title.now=last update time
+title.lock=conference lock state
+title.key=icon key
+title.main=main conference status table
+title.members=current conference members
+title.events=recent conference events

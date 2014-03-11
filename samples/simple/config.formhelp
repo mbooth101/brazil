@@ -1,0 +1,15 @@
+#test formhelp template option
+
+handler=template
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates=form
+#template.debug=true
+#set.class=sunlabs.brazil.template.SetTemplate
+#set.query=query.
+#bsl.class=sunlabs.brazil.template.BSLTemplate
+form.class=sunlabs.brazil.sunlabs.FormHelpTemplate
+
+# override halp text in form element attributes
+text.help=help message from the properties file
+banana=help message for 3rd radio button

@@ -1,0 +1,26 @@
+<title>Site Customization Page</title>
+<body>
+
+  <!-- set preference (if any) -->
+
+  <if name=query.customize>
+    <h2>Settings customized starting at next page</h2>
+    <foreach name=i glob=query.pref.*>
+      <set name=pref.${i.name.1} value=${i.value}>
+    </foreach>
+  </if>
+
+  <form method=post>
+    nav color:<select name=pref.color2>
+      <foreach name=color list="indigo purple darkseagreen">
+        <option value=${color}><get color></option>
+      </foreach>
+    </select>
+    body color:<select name=pref.color>
+      <foreach name=color list="beige khaki lightsalmon">
+        <option value="${color}"><get color></option>
+      </foreach>
+    </select>
+    <input type=submit name=customize value="customize">
+  </form>
+</body>

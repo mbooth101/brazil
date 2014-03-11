@@ -1,0 +1,777 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  Monitor a conference
+
+  vim: filetype=bsl
+  * namespaces
+    user_${userid} user preferences and name->icon mappings
+      contains user.icon.${calleridnum} to select the icon
+      contains user.name.${calleridnum} to select the text to display instead of the icon
+    BACKGROUND.${SessionID} our background session
+  * session variables:
+      map.${usernum} = ${divid}
+      map.${divid} = ${usernum}
+      id.${divid}=num (callerid num for this user)
+        usernum: the asterisk user number
+	divid:   the html "div" name for this user
+      user.name.${num} = ${user_info}
+      user.icon.${num} = icon
+        divid:   the html "div" name for this user
+	user_info: text containing the user's caller id information
+      confno
+        The conference number we are currently monitoring
+  * events are collapsed to enhance scaling performance
+  * User preferences:
+    - stored in user namespace ${userid}
+    - ${id}.icon: the prefered icon
+    - ${id}.text: the callerid identification
+-->
+
+<uniquewindows>
+
+<!-- background fetches go here -->
+
+<if name=url.orig glob=*background_*>
+
+  <!-- server has restarted, force a reload  -->
+
+  <if not name=userid>
+    <debug NO USERID reloading>
+    <section id="javascript"> window.location.replace("/login.html"); </section>
+    <message text="Session ended, re-authentication required">
+    <abort>
+  </if>
+
+  <if not name=confno>
+    <section id="javascript"> window.location.replace("/login.html"); </section>
+    <abort>
+  </if>
+  <set name=last.${userid} namespace=users value=${headers.timestamp}>
+
+  <!-- this doesn't belong here -->
+
+  <import namespace=user_${userid}>
+  <!-- these are redundant 
+    <register key="Meetme" exp="^${confno}$" queue=${SessionID}>
+    <register key="Event" exp="^UserEventMeetme${confno}$" queue=${SessionID}>
+  -->
+
+  <date set=date format="%b %d %T %a">
+  <extract name=date glob="* * * *" map="month day time dayname">
+
+  <section id="diag">START</section>
+  <section id="now"><get name=date></section>
+
+  <!-- dequeue a bunch of events at once -->
+
+  <set namespace=local name=eventlist value=1>
+  <queueinfo name=${SessionID} prepend=info />
+  <if not name=info.size value=0>
+    <sequence name=eventlist count=${info.size}>
+  </if>
+  <foreach name=n property=eventlist>
+    <debug DQing ${n}/${info.size} ....>
+    <dequeue name=${SessionID} prepend=q. timelimit=${system.queueTimeout#90}>
+    <debug DQd event=(${q.Event}) ${q.Status} (${q.error#OK}) user=(${q.Usernum})>
+
+    <if name=q.error value=timelimit>
+      <break>
+    </if>
+
+    <!-- handle message events from our foreground session -->
+
+    <if name=q.Event value="message">
+      <section id="append">
+	<span title="command result"><get q.Data></span>
+      </section>
+      <continue>
+    </if>
+
+    <!-- call-out status events go here -->
+
+    <if name=q.Event glob=UserEventMeetme*>
+      <if not name=q.Event value=UserEventMeetme${confno}>
+	 <unregister key="Event" exp="UserEventMeetme[0-9]" queue=BACKGROUND.${SessionID}>
+      <else>
+        <section id="append">
+	  <br><span title="Callout Status"><b>Call status:</b>
+  	      <get q.CallerIDNum> <get q.Callstatus></span>
+        </section>
+      </if>
+      <continue>
+    </if>
+
+    <!-- Event for wrong conference,  Ignore and unregister -->
+
+    <if not name=q.Meetme value=${confno}>
+      <debug "Got event for (${q.Meetme})!=(${confno}), unregistering">
+      <unregister key="Meetme" exp="^${q.Meetme}$" queue=${SessionID}>
+      <continue>
+    </if>
+
+    <!-- all the meetme events are processed here, toss everything else -->
+
+    <if not=true name=q.Event match="^Meetme(Join|Leave|Talking|Mute|Lock|DTMF)$">
+      <debug Skipping event: ${q.Event}>
+      <continue>
+    </if>
+
+    <section id=empty class=hidden></section>
+
+    <!-- this is temporary -->
+
+    <if name=q.Event match="MeetmeLock">
+      <section id="append">
+	<br><font color=orange>Lock<get q.Status></font>
+      </section>
+      <section id=Lock><get q.Status></section>
+      <continue>
+    </if>
+
+    <!--
+     Map Usernums to our div #'s.  meetme usernum's can grow without bound.
+     divs: list of empty divs.  For each join, take the first div off the list
+     and use it.  For leaves, put the div back on the list
+    --> 
+
+    <if not name=map.${q.Usernum}>
+      <list name=divs><set namespace=local name=divid value=${divs.first}></list>
+      <list name=divs remove=true location=0 />
+      <set name=map.${q.Usernum} value=${divid}>
+      <set name=map.${divid} value=${q.Usernum}>
+      <if name=q.CallerIDNum match="[\l\g\a ]">
+       	<set namespace=local name=q.CallerIDNum value=(unknown)>
+      </if>
+      <if name=q.CallerIDName match="[\l\g\a]">
+        <set namespace=local name=q.CallerIDName value="">
+      </if>
+      <set namespace=local name=cid value=${q.CallerIDNum}>
+      <set name=id.${divid} value=${cid}>
+      <if not name=user.name.${cid}>
+	<set namespace=user_${userid}
+	     name=user.name.${cid}
+	     value="${q.CallerIDNum} ${q.CallerIDName}"
+	>
+	<set namespace=user_${userid}
+	     name=user.icon.${cid}
+	     value="${icon}"
+	>
+      </if>
+    <else>
+      <set namespace=local name=divid value="${map.${q.Usernum}}">
+      <set namespace=local name=cid value="${id.${divid}}">
+    </if>
+
+    <!-- Assert
+       divid: where in the table info for this user goes
+       cid:	  The callerid or "identity" for the user
+    -->
+
+    <!-- handle talking/not talking events -->
+
+    <if name=q.Event value=MeetmeTalking>
+      <if not name=mute.${divid}>
+	<section id="${divid}image">
+	  <icon state=${q.Status} mute=${mute.${divid}}>
+	</section>
+      </if>
+      <continue>
+    </if>
+
+    <!-- dtmf events -->
+
+    <if name=q.Event value=MeetmeDTMF>
+      <if name=dtmf.${q.Status}>
+	<section id="append">
+	  <br><b>Notice:</b><span class=${dtmf.class#tabon}>
+	    <get name=user.name.${cid}>
+	    <get name=dtmf.${q.Status}>
+	    </span>
+	</section>
+      </if>
+      <continue>
+    </if>
+
+    <!-- new member Joined a conference -->
+
+    <if name=q.Event value=MeetmeJoin>
+      <inline name=item eval=true>
+	<br><span title="conference event">
+	  <b>Joined</b>
+	     ${user.name.${cid}} (${date.dayname} ${date.time})
+	</span>
+      </inline>
+      <list name=events${confno} insert=${item} max=20 />
+      <section id="append"><get item></section>
+      <section id=${divid}user class=visible><username></section>
+      <section id="${divid}image" class=visible>
+	<icon state=off mute=${mute.${divid}}>
+      </section>
+      <continue>
+    </if>
+
+    <!-- someone left -->
+
+    <if name=q.Event value=MeetmeLeave>
+      <inline name=item eval=true>
+	<br><b>Left</b> ${user.name.${cid}} (${date.time}) [${q.Duration}]
+      </inline>
+      <list name=events${confno} insert=${item} max=20 />
+
+      <!-- remove edit popup if current user went away.  -->
+
+      <section id=javascript>
+	<inline eval=true>
+	  delpopups("${divid}");
+	</inline>
+      </section>
+  
+      <section id="${divid}user" class=hidden></section>
+      <section id="${divid}image" class=hidden></section>
+      <section id="append"><get name=item></section>
+
+      <!-- remove the usernum to divname mapping -->
+  
+      <set name=id.${divid}>
+      <set name=map.${q.Usernum}>
+      <set name=map.${divid}>
+      <!-- <list name=divs insert=${divid} sort=true /> -->
+      <list name=divs append=${divid}>
+        <if name=divs.count value=${system.maxusers}>
+          <section id=empty class=visible>Conference ended, call in to restart</section>
+	</if>
+      </list>
+      <continue>
+    </if>
+
+    <!-- mute/unmute events -->
+
+    <if name=q.Event value=MeetmeMute>
+      <if name=q.Status value=on>
+	<set name=mute.${divid} value=un>
+	<set namespace=local name=type value=mute>
+      <else>
+	<set name=mute.${divid}>
+      </if>
+      <section id="append">
+	<br><b>Notice:</b>mute <get q.Status> for <get name=user.name.${cid}>
+      </section>
+      <section id="${divid}image">
+	<icon state=${type} mute=${mute.${divid}}>
+      </section>
+      <continue>
+    </if>
+  </foreach>
+  <abort>
+</if>
+
+<!-- reloads go here -->
+
+<checklogin goto=/conf.html>
+<head>
+<title>conference monitor</title>
+<stdinclude>
+<import namespace=user_${userid}>
+
+<!-- define some styles we can manipulate (this needs work XXX) -->
+
+<style eval=true>
+  .scroll {
+      width: ${style.scroll.width#450}px; height: ${style.scroll.height#350}px; overflow: auto;
+   }
+  .normal {
+      border-style: solid; border-width: 2px;
+      display: inline; border-color: #FFF;
+   }
+  .joined {
+      border-style: solid; border-width: 2px;
+      display: inline; border-color: #0F0;
+   }
+
+  .Xtalkingon, .Xtalkmode1 {
+      border-style: ridge; border-width: 2px;
+      display: inline; border-color: #44E;
+   }
+
+  .talkingon, .talkmode1 {
+      display: inline;
+   }
+
+  .talkmode0, .talkmode-1, .talkingoff {
+      background: white;
+      display: inline;
+   }
+
+   /* admin modes */
+   .adminmode0 { }
+   .adminmode1 {
+       color: red
+   }
+</style>
+
+<extract name=headers.url match="(.*)/(.*)" prepend=url map="all dir file">
+<script language=javascript type="application/JavaScript" eval=true defer>
+
+  // change the state of a dispay element
+
+  function setState(id, content, cls) {
+     if (id.match(/javascript/)) {
+	 // remove simple comments
+         content = content.replace(/<\!--[^>]*>/g,"");
+	 // alert("eval: " + content);
+         eval(content);
+         return;
+     }
+     var d = document.getElementById(id);
+     if (d != null)  {
+	if (cls.length > 0) d.className=cls;
+        if (id.match(/append/)) {
+	    d.innerHTML = content + d.innerHTML;
+	} else if (content.match(/[^ \t\n]/)) {
+	    d.innerHTML = content;
+        }
+     } else {
+       // alert("(" + id + ") not found!");
+     }
+  }
+  
+  /* Trim a list to "keep" items
+   * - name: the element id to trim
+   * - split: The list separator string
+   * - keep: The number of items to keep (on the front)
+   */
+  
+  function dotrim(name, split, keep) {
+    var id = document.getElementById(name);
+    if (id != null) {
+        var items = id.innerHTML.split(split);
+        var value = "";
+        for(var i=0; i<items.length && i < keep; i++) {
+          value += items[i] + split;
+        }
+        setState("status", "Trimming conference events", "busy");
+        id.innerHTML = value; 
+    }
+  }
+
+  function getReq() {
+    if (window.XMLHttpRequest) {	// Mozilla/firefox
+	return new XMLHttpRequest();
+      } else {			// IE
+	  return new ActiveXObject("Microsoft.XMLHTTP");
+      }
+  }
+
+  /*
+   * Use the tags: <section id=xxx class=yyy> ... content ... </section>
+   * Indeces:
+   *  0 leading stuff
+   *  1 "" or "/"
+   *  2 skip
+   *  3 id
+   *  4 skip
+   *  5 class
+   *  6 content
+   *  7 (same as 1)
+   */
+  var fetching=0;
+  var loc=window.location;
+
+  /*
+   * This function uses XMLHTTPrequest to fetch
+   * content from the server in the background.
+   * It processes the returned text content, then
+   * schedules itself to run again.
+   */
+
+  function fetchUpdate() {
+
+    var dosplit=/<(.)?section( *id="([a-zA-Z0-9_]+)")?( *class="([a-zA-Z0-9_]+)")?>/;
+    var req;
+
+
+    // parse and process the server results
+  
+    function process(req) {
+        var sections = req.responseText.split(dosplit);
+        for(var i=1; i < sections.length; i+=6) {
+           if (sections[i] == "/") {
+	       continue;
+           }
+	   var id=sections[i+2];
+	   var cls=sections[i+4];
+	   var content=sections[i+5];
+	   setState(id, content, cls);
+  
+	   ${system.diag} test += "div=" + id + "(" + cls + ") {" + content + "}\n";
+        }
+    }
+
+    // This prevents multiple fetches at once for users with
+    // happy reload button trigger fingers.
+
+    if (fetching > 0) return 0;
+    fetching=1;
+    setState("state", "ready", "ok");
+
+    req = getReq();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+	setState("status", "processing server data ...", "busy");
+	if (req.responseText != null && req.responseText.length > 0) {
+	   process(req);
+	   setTimeout('fetchUpdate()', 100);
+	   setState("status", "processing server data ... done", "ok");
+	} else {
+	   setTimeout('fetchUpdate()', 10000);
+	   setState("status", "Network Connection error, retrying...", "error");
+	}
+	fetching=0;
+        setState("state", "busy", "error");
+      } else {
+        // setState("append" , "(" + req.readyState + ")\r\n","ok");
+      }
+    }
+    req.open("GET", "${url.dir}/background_${url.file}", true);
+    setState("status", "waiting for server data ...", "busy");
+    req.send(null);
+    return 1;
+  }
+
+  // trim a string to char, return full string
+
+  function donote(field, delim) {
+     var value = field.value;
+     var index=value.indexOf(delim);
+     if (index > 0) {
+        field.value = value.substring(0, index+1)
+     } else {
+        field.value = "";
+     }
+     return value;
+  }
+
+  // synchronous form submission; results are discarded
+
+  function dosubmit(name, type, value) {
+    var synreq;
+    setState("process", "sending...", "error");
+    synreq=getReq();
+    synreq.open("GET", "/process.html" + name + "?type=" + type + "&value=" + value, true);
+    synreq.send(null);
+    setState("process", "-", "hidden");
+    return void(0);
+  }
+
+  // This gets run before the form is submitted, and builds the query for "process.html"
+  // trick do-submit into submitting multiple values
+
+  function changenumber (id, form) {
+     var num = document.getElementById(id).innerHTML;
+     document.getElementById("editusers").className="hidden";
+     document.getElementById(form.divid.value + "name").innerHTML = form.text.value;
+     return num + "&text=" + escape(form.text.value) + "&icon=" + form.icon.value;
+  }
+
+  // This gets run when the user clicks on the callerid field
+
+  function reqchange(div, number) {
+    document.getElementById("numtoedit").innerHTML=number;
+    document.getElementById("editusers").className="visible tab left";
+    document.getElementById("whisperuser").className="visible tab left";
+    var form=document.getElementById("edituserform");
+    form.text.value=document.getElementById(div + "name").innerHTML;
+    form.text.focus();
+    form.divid.value=div;
+    var form2=document.getElementById("whisperuserform");
+    document.getElementById("whisperid").innerHTML=document.getElementById(div + "name").innerHTML;
+    form2.whisper.value="";
+    form2.whisper.focus();
+    form2.divid.value=div;
+    return void(0);
+  }
+  
+  function dowhisper (field, form) {
+     var value = "Message From ${userid}, " + field.value;  
+     form.whisper.value="";
+     return value + "&divid=" + escape(form.divid.value);
+  }
+
+  function delpopups (divid) {
+    var form=document.getElementById("edituserform");
+    var form2=document.getElementById("whisperuserform");
+    if (divid == form.divid.value) {
+       document.getElementById("editusers").className="hidden";
+    }
+    if (divid == form2.divid.value) {
+     document.getElementById("whisperuser").className="hidden";
+    }
+  }       
+</script>
+</head>
+
+<body onload='fetchUpdate()'>
+<enqueue name=BACKGROUND.${SessionID} data="q.error#timelimit"> <!-- flush? -->
+
+<!--
+  Make sure we are allowed to see this conference, and choose a role.
+  Otherwise, punt back to the conference selector:
+  query.confno:   The conference we want to monitor
+  query.newconf:  an unlisted conference is specified
+  query.pswd:     The password for this conference (if any)
+-->
+
+<if not name=query.pswd match="^[0-9]*$">
+  <message text="Passwords must be numeric so they may be entered from a telephone keypad">
+  <addheader location=/conf.html${urlpart.2}>
+  <abort>
+</if>
+
+<if name=query.newconf>
+  <set namespace=local name=query.confno value=${query.newconf}>
+</if>
+
+<!-- authenticate and set session variables -->
+<!-- XXX this needs a REDO -->
+
+<if name=query.confno match=^[0-9]+$>
+  <getconfs>
+  <if name=conf.${query.confno}.${query.pswd}opts>
+    <set namespace=local name=ok value=true>
+  <elseif name=url.orig glob=/admin*>
+    <set namespace=local name=ok value=true>
+    <set name=role value=boss>
+  </if>
+
+  <if ok>
+    <set name=confno value=${query.confno}>
+    <set name=confno value=${query.confno} namespace=BACKGROUND.${SessionID}>
+    <if name=conf.${query.confno}.admins match="(^| )${userid}( |$)">
+      <set name=role value=admin>
+      <set name=role value=admin namespace=BACKGROUND.${SessionID}>
+    <elseif name=conf.${query.confno}.owner>
+      <set name=role value=view>
+      <set name=role value=view namespace=BACKGROUND.${SessionID}>
+    </if>
+    <addheader location=${headers.url}>
+  <else>
+    <set name=confno>
+    <set name=confno namespace=BACKGROUND.${SessionID}>
+    <if name=conf.${query.confno}.owner>
+       <if query.pswd>
+         <message text="Invalid password for conference ${query.confno}">
+       <else>
+         <message text="a password is required for conference ${query.confno}">
+       </if>
+       <addheader 
+          location="/conf.html${urlpart.2}?confno=${query.confno}&needpass=true"
+       >
+    <else>
+       <message text="Invalid conference or password specified">
+       <addheader location="/conf.html${urlpart.2}">
+    </if>
+  </if>
+  <abort>
+</if>
+
+<if not name=confno>
+    <if query.confno>
+      <message text="Conferences must contain numbers only!">
+    <else>
+      <message text="Select a conference first">
+    </if>
+    <addheader location=/conf.html${urlpart.2}>
+  <abort>
+</if>
+
+<!-- register for conference events -->
+
+<unregister key="Meetme" exp="." queue=BACKGROUND.${SessionID}>
+<unregister key="Event" exp="UserEventMeetme" queue=BACKGROUND.${SessionID}>
+<queueinfo name=BACKGROUND.${SessionID} clear=true  prepend=info />
+<register key="Meetme" exp="^${confno}$" queue=BACKGROUND.${SessionID}>
+<register key="Event" exp="^UserEventMeetme${confno}$" queue=BACKGROUND.${SessionID}>
+
+<!-- display the conference -->
+
+<sequence name=users count=${system.maxusers}  start=user101>
+<import namespace=BACKGROUND.${SessionID}>
+
+<!-- clear all conference state (in the background session) -->
+
+<namespace name=BACKGROUND.${SessionID}>
+  <list name=divs clear=true append=${users} delim=" " />
+  <mapnames src=id.* remove=true>
+  <mapnames src=map.* remove=true>
+  <mapnames src=mute.* remove=true>
+
+  <!-- extract current members from the conference -->
+
+  <amicommand
+      server=${system.server} prepend=q action=command
+      command="meetme list ${confno} concise"
+  >
+  <extract all=true name=q.data prepend=get
+      match="([^!]*)!([^!]*)!([^!]*)!([^!]*)!([^!]*)!([^!]*)!([^!]*)!([^!]*)!([^\n]*)\n" 
+      map="usernum number name channel isadmin ismonitored ismuted talkmode time"
+  >
+
+  <if not name=q.data>
+    <h2 id=empty class=visible>Call in to begin the conference</h2>
+  </if>
+
+  <!-- set conference state -->
+
+  <foreach name=i property=get.matchlist>
+    <list name=divs><set namespace=local name=divid value=${divs.first}></list>
+    <list name=divs remove=true location=0 />
+    <if name=get.${i}.number match="[\l\g\a ]">
+      <set namespace=local name=cid value=unknown>
+    <else>
+      <set namespace=local name=cid value=${get.${i}.number#unknown}>
+    </if>
+
+    <if not name=user.name.${cid}>
+      <set namespace=user_${userid} name=user.name.${cid} value="${cid} ${get.${i}.name}">
+      <set namespace=user_${userid} name=user.icon.${cid} value="${icon}">
+    </if>
+    <set name=id.${divid} value="${cid}">
+    <set name=map.${get.${i}.usernum} value="${divid}">
+    <set name=map.${divid} value=${get.${i}.usernum}>
+    <set namespace=local name=talking.${divid} value="${talk.${get.${i}.talkmode}}">
+    <set namespace=local name=show.${divid} value="visible">
+    <if name=get.${i}.ismuted value=1>
+      <set namespace=local name=talking.${divid} value="mute">
+      <set name=mute.${divid} value=un>
+    </if>
+  </foreach>
+</namespace>
+
+last update: <span id=now>(page reload)</span> for <get userid><br>
+
+<table id=main>
+  <colgroup span=2></colgroup>
+  <caption>conference <span title="currently monitored conference"><get confno></span> role: <b title="web role"><get role></b></caption>
+  <tr> 
+    <td valign=top width=300 title="current conference participants">
+      <b>Members</b><br>
+      <table id="members">
+        <colgroup span=2></colgroup>
+        <foreach name=divid property=users>
+          <tr>
+	    <td>
+	      <span id="${divid}user" class=${show.${divid}#hidden}>
+	        <username cid=${id.${divid}}>
+	      </span>
+	    </td><td align=left>
+	      <span id="${divid}image" class=${show.${divid}#hidden}>
+	         <icon state=${talking.${divid}} mute="${mute.${divid}}">
+	      </span>
+	    </td>
+	  </tr>
+        </foreach>
+      </table>
+    </td>
+    <td valign=top title="recent conference events">
+      <table id="events">
+      <colgroup span=2></colgroup>
+        <tr>
+	  <th>Events (recent first)</th>
+	  <td>
+	    <form id=clear onsubmit='dotrim("append","\lbr\g", 15);return false'>
+	      <input type=submit value="trim events"
+	       title="remove all but most recent join/leave events">
+	    </form>
+	  </td>
+	</tr>
+      </table>
+      <div id=append class=scroll>
+        <list name=events${confno} namespace=BACKGROUND.${SessionID}>
+          <br><b>Reloaded</b> <date format="%b %d %T">
+          <get name=events${confno}.all>
+        </list>
+      </div>
+    </td>
+  </tr>
+</table>
+[Locked?<span id=Lock title="lock status">unknown</span>]
+<if name=role value=admin>
+  <span id=key title="these affect all users">
+    conference commands:
+    <a href="javascript:dosubmit(window.name, 'inject','tt-monkeys')" title=monkeys!><img height=25 src=images/monkey.gif alt=monkeys></a>
+  </span>
+  <a href="javascript:dosubmit(window.name, 'action.lock','0')" title="lock this conference"><img src=/images/lock.gif></a>
+  <a href="javascript:dosubmit(window.name, 'action.unlock','0')" title="unlock the conference"><img src=/images/unlock.gif></a>
+  <a href="javascript:dosubmit(window.name, 'action.muteall','0')" title="mute all regular members"><img src=images/quiet.gif></a>
+  <a href="javascript:dosubmit(window.name, 'action.unmuteall','0')" title="unmute all members"><img src=/images/loud.gif></a>
+  <a href="javascript:dosubmit(window.name, 'action.reset','0')" title="reset all volume levels"><img src=/images/reset.gif></a>
+</if>
+  <br>
+
+<table><tr><td>
+  <form method=post
+      onsubmit='dosubmit(window.name, "note",donote(note,":")); return false'
+      title="this goes to another web user"
+  >
+    IM web user:<input name=note title="user: message (or ?)">
+  </form>
+</td><td>
+  <if name=role value=admin>
+    <form method=post
+      onsubmit='dosubmit(window.name, "call",callee.value); return false'
+      title="The system calls this user to join the conference"
+    >
+      call user :<input name=callee size=10 title="number to call">
+    </if>
+  </form>
+</td></tr></table>
+
+<!--
+  XXX experiment
+  - when a user clicks on a number, "unhide" this form, and fill out "numtoedit"
+  - when "submit" is pushed, upadte user info, and "hide" the form
+-->
+
+<!-- whisper form -->
+
+<div id=whisperuser class="hidden">
+   <nobr>
+   <import namespace=user_${userid}>
+   <form id=whisperuserform method=post
+      onsubmit='dosubmit(window.name, "whisper", dowhisper(whisper, this)); return false'
+      title="whisper this user on their phone"
+      style="display: inline;"
+   >
+      Whisper message to <span id=whisperid></span>:<input name=whisper title="whisper message" size=40 maxlength=150>
+      <input type=hidden name=divid>
+      <input type=submit value=whisper>
+   </form>
+    </nobr>
+</div>
+
+<!-- pop-up form to edit username data -->
+
+<div id=editusers class="hidden">
+  <nobr>
+  <form id=edituserform method=post
+   onsubmit='dosubmit(window.name, "change", changenumber("numtoedit", this)); return false'
+   style="display: inline;"
+  >
+    <span id=numtoedit></span><input name=text size=15>
+    <select name=icon>
+      <foreach name=i property=icons><option value=${i}><get i></foreach>
+    </select>
+    <input type=hidden name=divid>
+    <input type=submit value=change>
+  </form>
+  </nobr>
+</div>
+<div id=others></div>
+<span id=state title="Link to server">(state)</span>
+<span id=process></span>
+</body>

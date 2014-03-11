@@ -1,0 +1,43 @@
+<head>
+<title>BeanShell Examples</title>
+</head>
+<body>
+The global variables <code>request</code>, <code>prefix</code>, and
+<code>server</code> are already defined.  Here's how to add a new
+property:
+<bsh>
+  sum = 3 + 4 + 5;
+  // total is different for every session
+  if (total == void) {
+     total = 1;
+  } else {
+     total++;
+  }
+  request.props.put("sum", Integer.toString(sum));
+  request.props.put("TOTAL", "Site accesses: " + total);
+</bsh>
+And here's a way to list the
+properties contained in the request:
+<table>
+  <bsh>
+  // It is poor practice to embed markup inside of scripts; we do it
+  // in this example to demonstate how to communicate between bsh
+  // and the rest of Brazil
+  e = request.props.propertyNames();
+  while (e.hasMoreElements()) {
+    name = e.nextElement();
+    value = request.props.getProperty(name);
+    print("<tr><td>" + name + "</td><td>" + value + "</td></tr>");
+  }
+
+  // add a new tag
+  void do_mytag() {
+      rewriteContext.append("I got my tag");
+  }
+  tagMap.put("mytag", "do_mytag();");
+  </bsh>
+</table>
+This is a new tag:
+<mytag foo=bar>
+The end.
+</body>

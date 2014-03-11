@@ -1,0 +1,269 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+  name=confadmin-advanced.html
+  Administer conferences - low level
+
+  current db settings as of: Mon Sep 11 2006
+  conf${conf}/opts=opts	meetme options if no password is required
+  conf${conf}/${pass}opts=opts	These are the meetme options to use for this password
+  conf${conf}/title	The conference title
+             /owner     The web site owner of the conference
+	     /admins	List of web site users with admin privileges
+	     /view	public/private
+	     /maxusers  max number of users allowed
+  Bugs:
+    - anytime a conference is changed, we call <invalidate_confs>,
+      which causes the entire conference db to be recreated.
+      We should update the conference namespace ourselves, so we don't
+      need to invalidate it.
+-->
+<cookiecheck>
+<uniquewindows>
+<checklogin>
+<head>
+<stdinclude hasform=true>
+<title>Advanced Conference Configuration</title>
+<style eval=true>
+  .code {
+      color: red;
+      font-weight: bold;
+      font-size: larger;
+  }
+</style>
+</head>
+<body>
+<div class=banner>
+If you do not know what all the options mean, use the
+<a href=/confadmin-simple.html${urlpart.2}>simple conference configurator</a>
+instead.
+</tab>
+<table><tr><td>
+
+<!-- create a new conference -->
+
+<if query.number>
+  <amicommand server=${system.server} prepend=q
+   action=command
+   command="database show conf${query.number}"
+  >
+  <if name=q.data glob=*conf*>
+    <span class=error>Conference <get query.number> already exists, can't create</span>
+  <else>
+    <dbput family=conf${query.number} key=owner value=${userid} />
+    <dbput family=conf${query.number} key=admins value=${userid} />
+    <dbput family=conf${query.number} key=title value="new ${userid}" />
+    <dbput family=conf${query.number} key=opts value="MdTo" />
+    <dbput family=conf${query.number} key=view value="public" />
+    <dbput family=conf${query.number} key=maxusers value="15" />
+    <set namespace=local name=query.update value=yes>
+    <set namespace=local name=query.confno value=${query.number}>
+    <invalidate_confs>
+    <h2>conference <get query.number> was created</h2>
+  </if>
+</if>
+
+<!-- delete an exiting conference -->
+
+<if query.delete>
+  <amicommand server=${system.server} prepend=q action=command
+   command="database deltree conf${query.edit}"
+  >
+  <h2>conference <get query.edit> was deleted</h2>
+  <set namespace=local name=query.update>
+  <set namespace=local name=query.confno>
+  <invalidate_confs>
+</if>
+
+<!-- update an existing conference -->
+
+<if query.update>
+  <h2>conference <get query.edit> was modified</h2>
+  <dbput family=conf${query.edit} key=title value=${query.title} />
+  <dbput family=conf${query.edit} key=admins value=${query.admins} />
+  <dbput family=conf${query.edit} key=maxusers value=${query.maxusers} />
+  <dbput family=conf${query.edit} key=view value=${query.view} />
+  <dbput family=conf${query.edit} key=type value=custom />
+
+  <!-- now for the password options -->
+
+  <extract name=query.options all=true match="([0-9]*)/([a-zA-Z]*)[^\n]*\n?"
+    prepend=o map="pass opt"
+  >
+  <foreach name=i property=o.matchlist>
+    <if name=o.${i}.opt match=..>
+      <dbput family=conf${query.edit}
+             key=${o.${i}.pass}opts value=${o.${i}.opt}
+      />
+    <else>
+      <dbdel family=conf${query.edit} key=${o.${i}.pass}opts />
+    </if>
+  </foreach>
+  <invalidate_confs>
+</if>
+
+<getconfs>
+<table rules=cols>
+  <caption>Choose a conference to edit</caption>
+  <tr>
+    <th>number</th>
+    <if name=url.orig glob=/admin*>
+      <th>owner</th>
+    </if>
+    <th>title</th>
+    <th>admins</th>
+    <th>max<br>users</th>
+    <th>view</th>
+    <th>options</th>
+  </tr>
+  <foreach name=i property=conf.list sort numeric>
+
+    <!-- only show owner conferences -->
+
+    <if not name=url.orig glob=/admin*>
+        <if not name=conf.${i}.owner value=${userid}>
+	  <continue>
+        </if>
+    </if>
+
+    <increment name=confcount>
+
+    <tr>
+      <td>
+        <a href=?confno=${i}><get i></a>
+      </td>
+      <if name=url.orig glob=/admin*>
+        <td><get name=conf.${i}.owner></td>
+      </if>
+      <td><get name=conf.${i}.title default="(no title)"></td>
+      <td><get name=conf.${i}.admins default=(none)></td>
+      <td><get name=conf.${i}.maxusers default=15></td>
+      <td><get name=conf.${i}.view default=(none)></td>
+      <td>
+        <table>
+	  <tr><th>password</th><th>options</th></tr>
+          <foreach name=j glob=conf.${i}.*opts sort=${j.name.1} numeric>
+           <tr><td>
+	      <if name=conf.${i}.owner value=${userid}>
+	        <get name=j.name.1>
+              <elseif name=url.orig glob=/admin*>
+	        <get name=j.name.1>
+	      <else>
+	        ****
+	      </if>
+	    </td><td><get j.value></td></tr>
+          </foreach>
+        </table>
+      </td>
+    </tr>
+  </foreach>
+</table>
+<p>
+
+<!-- allow admins global access -->
+
+<if name=url.orig glob=/admin*>
+  <set namespace=local name=check value=*>
+<else>
+  <set namespace=local name=check value=${userid}>
+</if>
+<if name=conf.${query.confno}.owner glob=${check}>
+  <table><tr><td>
+  <h2>Edit channel <b><get query.confno></b></h2>
+  <form method=post  help='do_help(%)' event=onmouseover prepend="conf.${query.confno}.">
+    <input type=hidden name=edit value="${query.confno}">
+    title:<input name=title value="" help=titlehelp title=conftitle><br>
+    <div id=titlehelp norewrite=true class=hidden>
+      The title is spoken to each participant as they enter the conference
+      For example:
+        <i>Welcome to the <b><get name=conf.${query.confno}.title></b> conference</b></i>
+    </div>
+    admins:<input name=admins value="" help=adminhelp title=admins><br>
+    <div id=adminhelp norewrite=true class=hidden>
+      Only the users on this list can modify the conference from the web interface
+    </div>
+    view:<select name=view help=viewhelp>
+      <option value=public selected>public
+      <option value=private>private
+      </select>
+    <br>
+    max participants:<input name=maxusers size=2 title="default=15"><br>
+    <div id=viewhelp norewrite=true class=hidden>
+      Public conferences are browsable, private ones are not.
+    </div>
+    <foreach name=j glob=conf.${query.confno}.*opts sort=${j.name.1} numeric>
+       <inline name=fill append=true eval=true namespace=local esc=true>${j.name.1}/${j.value}\n</inline>
+    </foreach>
+    <textarea name=options rows=4 cols=40 help=helpoptions><get name=fill default=""></textarea><br>
+    <div id=helpoptions norewrite=true class=hidden>
+      Entries are of the form <b>pass</b>/<b>options</b>, where <b>pass</b> is the required
+      password (empty for no password), and <b>options</b> are the meetme options
+      used for that password.
+      <p>
+      To remove an entry, leave the <b>options</b> blank.  See the table at the right
+      for the valid options.
+    </div>
+    <input type=submit name=update help="push the button" value="update conference ${query.confno}" title=update>
+    <input type=submit name=delete help="are you sure?" value="delete conference ${query.confno}" title=confdelete>
+    </td></tr>
+  </form>
+  </td></tr></table>
+</if>
+
+<if expr="${confcount} \l ${system.maxconfs}">
+  <h2>Create a new conference channel</h2>
+  <form method=post  help='do_help(%)' event=onmouseover>
+    Conference number:
+    <input name=number help="3 digit conference number" size=3 title=confnum>
+    <br>
+  </form>
+</if>
+</td><td style="width: 2; background-color: thistle; margin: 9"></td><td valign=top border=2>
+
+<h3>Meetme Options</h3>
+(configurable options from extensions.conf)<br>
+The options <span class=code>d</span> and <span class=code>o</span> <b>must</b> always be used.
+<br><span class=code>a</span>
+set admin mode
+<br><span class=code>A</span>
+set marked mode
+<br><span class=code>c</span>
+announce user(s) count on joining a conference
+<br><span class=code>i</span>
+announce user join/leave
+<br><span class=code>m</span>
+set monitor only mode (Listen only, no talking)
+<br><span class=code>M</span>
+enable music on hold when the conference has a single caller
+<br><span class=code>p</span>
+allow user to exit the conference by pressing '#'
+<br><span class=code>q</span>
+quiet mode (don't play enter/leave sounds)
+<br><span class=code>r</span>
+Record conference (records as ${MEETME_RECORDINGFILE}
+    using format ${MEETME_RECORDINGFORMAT}). Default filename is
+    meetme-conf-rec-$\{CONFNO}-${UNIQUEID} and the default format is wav.
+<br><span class=code>s</span>
+Present menu (user or admin) when '*' is received ('send' to menu)
+<br><span class=code>t</span>
+set talk only mode. (Talk only, no listening)
+<br><span class=code>T</span>
+set talker detection (sent to manager interface and meetme list)
+<br><span class=code>w</span>
+wait until the marked user enters the conference
+<br><span class=code>x</span>
+close the conference when last marked user exits
+<br><span class=code>X</span>
+allow user to exit the conference by entering a valid single
+    digit extension ${MEETME_EXIT_CONTEXT} or the current context
+<br><span class=code>z</span>
+Hitting the keys generates DTMF events
+
+</td></tr></table>
+<div id=help norewrite=true class=help>nouse-over field help</div>
+</body>

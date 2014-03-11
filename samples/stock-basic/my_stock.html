@@ -1,0 +1,25 @@
+<title>Common Stock Prices</title>
+<body bgcolor=white>
+<import namespace=stock>
+<h1>Common Stocks</h1>
+  <table border>
+    <tr><th>name</th><th>symbol</th><th>price</th><th>last update</th></tr>
+    <foreach name=id glob=stock.* sort>
+      <if name=myStock.${id.name.1}><tr bgcolor=orange><else><tr></if>
+	<td><get name=id.value></td>
+	<td><get name=id.name.1></td>
+	<if name=extract.${id.name.1}.price>
+          <td><get name=extract.${id.name.1}.price></td>
+          <td><get name=extract.${id.name.1}.time>-<get name=extract.${id.name.1}.date></td>
+	<else>
+	  <td colspan=2 align=center>N/A</td>
+	</if>
+      </tr>
+    </foreach>
+  </table>
+<hr>
+<a href=/index.html>home</a> |
+<a href=/select.html>select stocks</a> |
+<a href=/value.html>my portfolio</a> |
+<b>all stocks</b>
+</body>

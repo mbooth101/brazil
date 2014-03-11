@@ -1,0 +1,32 @@
+<title>Brazil Language Translation service</title>
+<form>
+Enter text to translate:<input name=text>
+</form>
+<br>
+<if query.text>
+  The english: <b><get query.text></b> is translated to:
+  <table>
+  <foreach name=lang glob="lang.*" sort="${lang.value}">
+     <include name=${lang.value} href=${href}
+      post="text=${query.text}&langpair=en|${lang.name.1}&hl=en"
+      getheaders=headers.${lang.value}
+     >
+     <extract name=template.${lang.value} match="PHYSICAL\g([^\l]*)">
+     <tr>
+       <th align=right><get lang.value></th>
+       <td><get name=template.${lang.value}.1></td>
+     </tr>
+  </foreach>
+  </table>
+<else>
+  <p>
+  Enter some (english) text in the box above.  The text will be
+  automatically sent to an Internet translation service for
+  translation.
+</if>
+<hr>
+<if query.debug>
+  <foreach name=i glob=* sort>
+  <b><get i.name></b>=<get name=i.value convert=html><br>
+  </foreach>
+</if>

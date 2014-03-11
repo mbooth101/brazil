@@ -1,0 +1,46 @@
+# Sample configuration for converting dt calendar into html
+
+root=.
+log=5
+port=4001
+
+handler=sunlabs.brazil.server.ChainHandler
+handlers=session calc template
+
+# Use browser cookies to keep track of session information
+
+session.class=sunlabs.brazil.handler.CookieSessionHandler
+
+# Enable the expression evaluator so we can do arithmetic
+
+calc.class=sunlabs.brazil.properties.ExprPropsHandler
+
+# treat "calendar.html" as a template, and enable the proper entities
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= \
+	sunlabs.brazil.template.SetTemplate \
+	sunlabs.brazil.template.BSLTemplate \
+	sunlabs.brazil.template.FormTemplate \
+	sunlabs.brazil.sunlabs.SubstAllTemplate \
+	sunlabs.brazil.sunlabs.ExecTemplate \
+	sunlabs.brazil.sunlabs.DateTemplate
+template.query=query.
+template.debug=1
+template.default=calendar.html
+
+# Days in the month.
+# handle leap years specially (in the template)
+
+days.01=31
+days.02=28
+days.03=31
+days.04=30
+days.05=31
+days.06=30
+days.07=31
+days.08=31
+days.09=30
+days.10=31
+days.11=30
+days.12=31

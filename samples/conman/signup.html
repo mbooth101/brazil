@@ -1,0 +1,155 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+  Signup a new user:
+  - new user registration
+  - initiate email validation
+ -->
+
+<uniquewindows>
+<title>screen name sign-up</title>
+<style eval=true>
+  .error { background-color: #F00; }
+  .info { background-color: #F0F; }
+  .notice { background-color: #FF0; }
+</style>
+<stdinclude hasform=true>
+<body onload="document.form.handle.focus();">
+<h2>Select a screen name</h2>
+
+<!-- register a new screen name (need session, handle, pass1, pass2) -->
+
+<if query.register>
+  <debug "registering a new name">
+  <foreach name=x list=dontcare>
+    <if not name=query.handle match="^[a-zA-Z][a-zA-Z0-9_]+$">
+      <span class=error>Invalid screen name, use 2 or more letters, numbers or _</span>
+      <break>
+    </if>
+
+    <if not name=query.pass1 match="^.....*$">
+       <span class=error>Password is not long enough, use at least 5 characters</span>
+       <break>
+    </if>
+
+    <if not name=query.pass1 value="${query.pass2}">
+      <span class=error>Passwords don't match, try again</span>
+      <break>
+    </if>
+
+    <!-- fix the email address -->
+
+    <if not name=query.email glob=*${system.emaildomain}>
+      <append name=query.email value=${system.emaildomain}>
+    </if>
+
+    <import namespace=register />
+    <lock name=register>
+      <if name="registered.${query.handle}.credentials">
+        <span class=error>Sorry, "<get query.handle>" is already in use</span>
+        <break>
+      </if>
+
+      <digest name=credentials value="${query.handle}:${query.pass1}">
+      <namespace name=register>
+        <set name=registered.${query.handle}.credentials value=${credentials}>
+        <set name=registered.${query.handle}.hint value=${query.hint}>
+        <set name=registered.${query.handle}.email value=${query.email}>
+        <set name=registered.${query.handle}.time value=${headers.timestamp}>
+        <set name=registered.${query.handle}.needsvalidation value=${SessionID}>
+      </namespace>
+      <namespace name=register store=config.users />
+    </lock>
+    <debug name registered: ${query.handle}>
+
+    <!-- optional email verification -->
+
+    <inline name=body eval=true>
+      <html>
+        <h2>Sunlabs audio meeting system signup verification</h2>
+        I think you have requested the user name <b>${query.handle}</b>.
+	If so, then either click on <b>activate link</b> below, or
+	cut-and-paste the url below it into your browser.
+	<ul>
+	  <a href=http://${headers.host}/login.html?handle=${query.handle}&validate=${SessionID}>
+	  activate link</a>
+	</ul>
+	[http://${headers.host}/login.html?handle=${query.handle}&validate=${SessionID}]
+      </html>
+    </inline>
+    <sendmail
+     to=${query.email}
+     from=signerupper@pbx-3.sfbay.sunlabs.com
+     body=${body}
+     subject="Sunlabs conferencing system validation request"
+    >
+      <param name=content-type value=text/html>
+    </sendmail>
+    <debug EMAIL Sent to ${query.email}>
+
+    <!-- end of email verification -->
+
+    <!-- redirect back to login page -->
+
+    <inline name=text eval=true>
+      You will receive your validation code via email shortly
+      at: <b>${query.email}</b>.
+    </inline>
+    <message text=${text}>
+    <addheader location=/login.html${urlpart.2}?handle=${query.handle}>
+  </foreach>
+</if>
+
+<set name=query.pass1>
+<set name=query.pass2>
+<form name=form prepend=query. method=post  help="do_help(%)" event=onmouseover>
+  <input type=hidden name=session value=${SessionID}>
+  <table id=reference norewrite=true>
+    <tr><td>screen name</td><td>
+      <input name=handle value=""
+       help="Pick a screen name of at least 3 letters or numbers"
+      >
+    </td></tr>
+    <tr><td>password</td><td>
+      <input type=password name=pass1
+       help="The server does not store a copy of this password"
+      >
+    </td></tr>
+    <tr><td>password (again)</td><td>
+      <input type=password name=pass2
+       help="We need to make sure you can type the same password at least twice!"
+      >
+    </td></tr>
+    <tr><td>hint</td><td>
+      <input name=hint value=""
+       help="We will email you this hint if you forget your password"
+      >
+    </td></tr>
+    <tr><td>email</td><td>
+      <input name=email value=""
+       help=emailhelp
+      ><get name=system.emaildomain>
+    </td></tr>
+    <div id=emailhelp norewrite=true class=hidden>
+       Enter your email address here.
+       <if name=system.emaildomain match=.>
+         The <b><get system.emaildomain></b> will be added for you
+	 automatically.
+       </if>
+    </div>
+    <tr><td colspan=2 align=center>
+      <input type=submit name=register value=register
+       help="go ahead. Push the button..."
+      >
+     </td></tr>
+    <tr><td colspan=2>
+      <div id=help norewrite=true class=help title="field help"></div>
+    </td></tr>
+  </table>
+</form>
+</body>

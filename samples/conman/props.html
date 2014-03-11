@@ -1,0 +1,49 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+-->
+
+<head>
+<stdinclude>
+<title>Server Properties</title>
+</head>
+<body>
+
+<if query.edit>
+  <get query.field>
+  <if name=query.value match=.>
+    <set namespace=server name=${query.field} value=${query.value}>
+    updated
+  <else>
+    <set namespace=server name=${query.field}>
+    removed
+  </if>
+  <br>
+</if>
+<h1>properties</h1>
+<import namespace=users />
+<import namespace=conference />
+<asterisk>
+<extract name=headers.url match="(.*)/(.*)">
+<table border=2>
+  <foreach name=i glob=* sort>
+    <tr><td><get i.name></td>
+        <td><if name=i.name glob=*.pass*>*****<else><get i.value></if></td>
+    </tr>
+  </foreach>
+</table>
+
+<if name=url.orig glob=/admin*>
+  <h2>Edit a field</h2>
+  <form method=post>
+    handle.field:<input name=field>value (empty to remove):<input name=value>
+    <input type=submit value=update name=edit>
+  </form>
+</if>
+<a href=/index.html>home</a>
+</body>

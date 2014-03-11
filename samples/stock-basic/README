@@ -1,0 +1,14 @@
+Sample application for fetching stock quotes and
+computing portfolio values.
+This is a variation of the demo in ../stock that uses basic authentication
+instead of cookies for session information.
+In addition to the capabilities outlined in ../stock.README, 
+this example demonstrates:
+- dynamic management of basic authentication information
+- inline "scripting" to calculate basic authentication tokens
+- url mapping, so project may share the same files with different names.
+
+Run with:
+java \
+   -classpath brazil.jar:tcl.jar \
+   sunlabs.brazil.server.Main -c config -c config.stock $*

@@ -1,0 +1,30 @@
+<title>Sample company phone book using the SQLtemplate</title>
+<h1>Welcome to the company telephone book</h1>
+<p>
+This page uses SQL to retrieve phonebook information from an SQL database.
+<hr>
+<form>
+  Last name:<input name=name>
+</form>
+<p>
+<if sql.error>
+  <center>
+    <font color=red>Error: <b> <get sql.error> </b></font>
+  </center>
+</if>
+<if Query.name>
+  <sql debug eval prefix=names>
+    select id, last, first, mi , phone, location
+      from namelist
+      where last='${Query.name}'
+  </sql>
+  <table border=2>
+    <foreach name=index property=names.rows>
+      <tr>
+        <foreach name=field list="first mi last phone location">
+          <td><get name=names.namelist.${field}.${index}></td>
+        </foreach>
+      </tr>
+    </foreach>
+  </table>
+</if>

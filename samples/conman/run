@@ -1,0 +1,14 @@
+#!/bin/sh
+# Start the Conference Manager web site
+
+# change this to point to the result of `pwd`
+ROOT=/home/suhler/conman
+
+# uncomment this line to cause diagnostic info to be emitted as part
+# of the markup the server sends to the browser
+#DEBUG="-c config.debug"
+
+PORT=8080
+exec java -classpath brazil-2.3.jar:freeTTSall.jar \
+	sunlabs.brazil.server.Main \
+	-c config.server -c config.conman $DEBUG root $ROOT port $PORT $*

@@ -1,0 +1,46 @@
+<title>Testing SQL DERBY template</title>
+<h1>This is a test of the DERBY SQL template</h1>
+<p>
+This is the Brazil version of the simple derby demo
+<ul>
+
+<li>Create the database
+<sql debug eval prefix=sql. type=system>
+  create table derbyDB(num int, addr varchar(40))
+</sql>
+<code><get sql.error></code>
+<set local name=sql.error>
+
+<li>insert an item
+<sql debug eval prefix=sql. type=system>
+  insert into derbyDB values (1956,'Webster St.')
+</sql>
+<code><get sql.error></code>
+<set local name=sql.error>
+
+<li>insert an item
+<sql debug eval prefix=sql. type=system>
+  insert into derbyDB values (1910,'Union St.')
+</sql>
+<code><get sql.error></code>
+<set local name=sql.error>
+
+<li>update an item
+<sql debug eval prefix=sql. type=update>
+  update derbyDB set num=180, addr='Grand Ave.' where num=1956
+</sql>
+<code><get sql.error></code>
+<set local name=sql.error>
+
+<li>get the results
+<sql debug eval prefix=sql. type=query>
+  SELECT num, addr FROM derbyDB ORDER BY num
+</sql>
+<code><get sql.error></code>
+<set local name=sql.error>
+
+</ul>
+
+<foreach name=i glob=* sort>
+<get i.name>=<get i.value><br>
+</foreach>

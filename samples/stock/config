@@ -1,0 +1,51 @@
+# sample stock grabber configuration using the PollHandler to
+# obtain stock information from yahoo in the background
+
+handler=main
+main.class = sunlabs.brazil.server.ChainHandler
+main.handlers=session poll calc template
+exitOnError=1
+
+# Use a cookie to track session state
+
+session.class=sunlabs.brazil.handler.CookieSessionHandler
+session.cookie=stocks
+session.presist=true
+
+# Fetch some common stock quotes from yahoo periodically
+
+poll.class=sunlabs.brazil.handler.RePollHandler
+poll.interval=59
+poll.fast=1
+poll.prepend=stock
+poll.prefix=/newstock
+poll.proxy=hack.eng:7071
+poll.re=extract
+poll.namespace=stock
+poll.sessionTable=data
+poll.url=http://quote.yahoo.com:80/d/quotes.csv?f=sl1d1t1&e=.csv&s=AA+AAPL+ADBE+ADCT+ADPT+ADSK+AEP+AGC+AIG+AIT+ALD+ALT+ALTR+AMAT+AMGN+AMP+AMPM+AMZN+ANDW+APCC+APOL+ARC+ASND+ATHM+ATML+AVP+AXP+BA+BAC+BAX+BBBY+BC+BCC+BDK+BEL+BGEN+BHI+BMCS+BMET+BMY+BNI+BS+C+CAT+CATP+CBRL+CBS+CEFT+CEN+CEXP+CGP+CHA+CHIR+CI+CL+CMCSK+CMGI+CMVT+CNTO+COL+COMR+COMS+COST+CPB+CPWR+CSC+CSCO+CTAS+CTXS+DAL+DD+DELL+DIS+DLTR+DOW+EFII+EK+ERICY+ERTS+ETR+F+FAST+FDLNB+FDX+FHCC+FISV+FLR+GD+GE+GENZ+GM+HAL+HD+HET+HIG+HM+HNZ+HON+HRS+HWP+IBM+IFF+IMNX+INTC+INTU+IP+JNJ+JPM+KLAC+KM+KO+LCOS+LLTC+LNCR+LTD+LVLT+MAY+MCCRK+MCD+MCHP+MCLD+MER+MKG+MLHR+MMM+MO+MOB+MOLX+MRK+MSFT+MTC+MUEI+MXM+NETA+NOBE+NOVL+NSC+NSM+NT+NTLI+NWAC+NXTL+ONE+ORCL+OXY+PAYX+PCAR+PEP+PG+PHSYB+PMTC+PNU+PRD+PSFT+QCOM+QNTM+QTRN+QWST+RAL+ROK+RTN+RTRSY+RXSD+S+SANM+SBC+SBUX+SIAL+SLB+SNPS+SO+SPLS+SPOT+SSCC+STEI+SUNW+T+TAN+TECD+TEK+TLAB+TXN+UNPH+USAI+UTX+VRTS+VTSS+WCOM+WMT+WTHG+XLNX+XON+YHOO
+
+# This is the regular expression that extracts the csv format file from yahoo
+# into a name/value "properties" list
+
+extract.exp="([A-Z]+)",([0-9.]+),"([0-9/]+)","([0-9:ampAMP]+)"
+extract.flags=ESF
+extract.names=X symbol price date time
+extract.key=1
+
+# Insert the calculator "Smart Properties" so we can do arithmetic
+
+calc.class=sunlabs.brazil.properties.ExprPropsHandler
+
+#
+# This is so we can look at the results
+#
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= sunlabs.brazil.template.SetTemplate \
+                    sunlabs.brazil.template.BSLTemplate \
+                    sunlabs.brazil.sunlabs.SubstAllTemplate 
+template.sessionTable=data
+template.query=query.
+template.headers=header.
+template.debug=1

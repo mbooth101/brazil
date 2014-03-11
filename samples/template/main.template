@@ -1,0 +1,62 @@
+<head>
+  <title>
+    Primary template title page
+  </title>
+</head>
+
+<body>
+  <table border=0 cellpadding=0 cellspacing=0 width=100%>
+    <tr>
+      <td colspan=3 align=center bgcolor=#EEEEFF>
+        <h1><get title></h1>
+      </td>
+    </tr>
+    <tr>
+      <td bgcolor=${pref.color2#purple} valign=top>
+
+        <!-- breadcrumbs -->
+
+        <table border=0 cellpadding=0 cellspacing=0 align=left>
+          <tr><td >
+	    <a href=${header.url}?template.fileName=printing.template>
+	      <font color=white>print</font>
+	    </a>
+	  </td></tr>
+          <tr><td>
+	    <a href=/index.html><font color=white>home</font></a>
+	  </td></tr>
+          <foreach name=nav property="NAV." delim="/">
+            <tr><td>
+              <a href=${NAV.${nav}}index.html><font color=white><get nav></font></a>
+            </td></tr>
+          </foreach>
+          <if name=meta-see>
+            <tr><td><hr></td></tr>
+            <tr><td>
+              <a href=${meta-see}><font color=white>See also</font></a>
+            </td></tr>
+          </if>
+        </table>
+      </td>
+      <td width=3 bgcolor=black>
+        <img border=0 width=3 src=/images/b.gif>
+      </td>
+      <td width=800  bgcolor=${pref.color#white}>
+        <content>
+         <get content>
+        </content>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=3 align=center bgcolor=#EEEEFF>
+      Copyright Notice
+      </td>
+    </tr>
+  </table>
+<if query.debug>
+  <hr>
+  <foreach name=i glob=* sort>
+    <b><get name=i.name></b>=<get name=i.value convert=html><br>
+  </foreach>
+</if>
+</body>

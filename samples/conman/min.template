@@ -1,0 +1,59 @@
+<!-- 
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  Sample "minimal" template
+-->
+<head>
+  <title><get system.name>: the Asterisk meetme conference manager</title>
+  <link rel="stylesheet" type="text/css" href="/style.css" title="default"> 
+  <script type="application/JavaScript" src="/std.js"></script>
+  <script eval>${script}</script>
+  <style eval>${style}</style>
+</head>
+<tag name=body> <get name=bodyArgs default=""> title="main template"</tag>
+<div class=banner>
+  <span class=caption><get system.name>: <get title></span>
+  <if userid>
+    You are logged on as <b><get userid></b>
+  </if>
+</div>
+
+<div title="page content">
+  <content><get content></content>
+</div>
+
+<hr>
+<tab tag=home url=index div=span title="main page">
+<if userid>
+  <tab tag=select url=conf div=span title="choose a conference to monitor">
+  <if confno>
+    <tab tag=monitor url=monitor div=span title="monitor a conference">
+  </if>
+  <tab tag=preferences url=userprefs div=span title="set user preference">
+  <tab tag=conference url=confadmin div=span title="create or administer conferences">
+  <tab tag=logout url=logout div=span title="I'm done">
+<else>
+  <tab tag=login url=conf div=span title="sign on to the system">
+  <tab tag=signup url=signup div=span title="create a new acccount">
+</if>
+<br>
+Copyright (c) 2006 Sun Microsystems.
+
+
+<!-- diagnostic information (lots) -->
+    
+<if query.debug>
+  <hr>
+  <table border>
+  <foreach name=i glob=* sort>
+    <tr><td valign=top><get i.name></td>
+        <td><pre><get name=i.value convert=html></pre></td>
+    </tr>
+  </foreach>
+  </table>
+</if>
+</body>

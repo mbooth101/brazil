@@ -1,0 +1,33 @@
+<!-- 
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+-->
+
+<h1>set server values without restarting the server</h1>
+<if query.file>
+  reloading the server namespace from <get query.file>...
+  <namespace name=server load=${query.file}>
+  done
+</if>
+<if query.name>
+  <if query.value>
+    <set namespace=server name=${query.name} value=${query.value}>
+    <get query.name> changed<br>
+  <else>
+    <set namespace=server name=${query.name}>
+    <get query.name> deleted<br>
+  </if>
+</if>
+
+<form mathod=post prefix=query.>
+  properties file: <input name=file value=""> (e.g. config.asterisk config.filter)
+</form>
+<form mathod=post prefix=query.>
+  property name: <input name=name value="">=<input name=value value="">
+  <input type=submit>
+</form>

@@ -1,0 +1,301 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+  name=confadmin-simple.html
+  Administer conferences - simple version
+
+  current db settings:
+  conf${conf}/${pass}opts=opts	meetme options for this password
+  conf${conf}/title	The conference title
+             /owner     The web site owner of the conference
+	     /admins	List of web site users with admin privileges
+	     /view	public/private
+	     /maxusers  max number of users allowed
+  These are for our convenience, and ignored by meetme
+	     /data      sadm:[hosted]:[hostpass]:[userpass]:[record]
+-->
+<head>
+<cookiecheck>
+<uniquewindows>
+<checklogin>
+<stdinclude hasform=true>
+<title>configure my conferences</title>
+</head>
+<body>
+
+<!-- get all the conference info out of the database -->
+
+<getconfs>
+
+<!-- create a new conference -->
+
+<if query.number>
+  <lock name=conf${query.number}>
+  <if not name=query.number match="^[0-9]+$">
+    <span class=error>
+      Invalid conference, "<get query.number>, use numbers"
+    </span>
+  <elseif name=conf.${query.number}.owner>
+    <span class=error>
+      Conference <get query.number> already exists, can't create
+    </span>
+  <else>
+    <dbput family=conf${query.number} key=owner value=${userid} />
+    <dbput family=conf${query.number} key=admins value=${userid} />
+    <dbput family=conf${query.number} key=title value="new ${userid}" />
+    <dbput family=conf${query.number} key=view value="public" />
+    <dbput family=conf${query.number} key=maxusers value="15" />
+    <dbput family=conf${query.number} key=opts value=${system.nonhost} />
+    <dbput family=conf${query.number} key=data value=sadm:no::: />
+
+    <h2>conference <get query.number> was created</h2>
+    <set namespace=local name=query.confno value=${query.number}>
+    <invalidate_confs>
+    <getconfs>
+  </if>
+  </lock>
+</if>
+
+<!-- delete an exiting conference -->
+
+<if query.delete>
+  <amicommand server=${system.server} prepend=q action=command
+   command="database deltree conf${query.edit}"
+  >
+  <h2>conference <get query.edit> was deleted</h2>
+  <set namespace=local name=query.confno>
+  <invalidate_confs>
+  <getconfs>
+</if>
+
+<!-- update an existing conference -->
+
+<if query.update>
+  <h2>conference <get query.edit> was modified</h2>
+  <dbput family=conf${query.edit} key=title value=${query.title} />
+  <dbput family=conf${query.edit} key=admins value=${query.admins} />
+  <dbput family=conf${query.edit} key=maxusers value=${query.maxusers} />
+  <dbput family=conf${query.edit} key=view value=${query.view} />
+  <!-- data=sadm:[hosted]:[hostpass]:[userpass]:[record] -->
+  <dbput family=conf${query.edit} key=data
+      value=sadm:${query.hosted}:${query.hostpass}:${query.userpass}:${query.record}
+  />
+
+  <!-- remove any old password options -->
+
+  <foreach name=i glob=conf.${query.edit}.*opts>
+    <dbdel family=conf${query.edit} key=${i.name.1}opts>
+  </foreach>
+
+  <if name=query.record value=yes>
+    <set namespace=local name=record value=r>
+  </if>
+  <if name=query.hosted value=yes>
+    <if not name=query.hostpass match=.>
+      <set namespace=local name=query.hostpass value=${query.confno}>
+      <div class=warning>
+      No host password set, using conference number as host password
+      </div>
+    </if>
+    <dbput family=conf${query.edit}
+           key=${query.hostpass}opts
+	   value=${system.hosted.host}${record}
+    />
+    <dbput family=conf${query.edit}
+           key=${query.userpass}opts
+	   value=${system.hosted.user}
+    />
+  <else>
+    <dbput family=conf${query.edit}
+           key=${query.userpass}opts
+	   value=${system.nonhost}${record}
+    />
+  </if>
+  <invalidate_confs>
+  <getconfs>
+</if>
+
+<table rules=cols>
+  <caption>Click on conference number to edit that conference</caption>
+  <tr>
+    <th title="DTMF tones used to select this conference">number</th>
+    <if name=url.orig glob=/admin*>
+      <th>owner</th>
+    </if>
+    <th title="This is spoken to joining memebers">title</th>
+    <th title="admins may control the conferece via the web">admins</th>
+    <th title="total conference capacity">max<br>users</th>
+    <th title="public conferences are browsable, private ones are not">view</th>
+  </tr>
+  <foreach name=i property=conf.list sort numeric>
+
+    <!-- only show owner conferences -->
+    <if not name=url.orig glob=/admin*>
+        <if not name=conf.${i}.owner value=${userid}>
+	  <continue>
+        </if>
+    </if>
+    <increment name=confcount>
+
+    <tr>
+      <td>
+        <a href=?confno=${i}><get i></a>
+      </td>
+      <if name=url.orig glob=/admin*>
+        <td><get name=conf.${i}.owner></td>
+      </if>
+      <td><get name=conf.${i}.title default="(no title)"></td>
+      <td><get name=conf.${i}.admins default=(none)></td>
+      <td><get name=conf.${i}.maxusers default=15></td>
+      <td><get name=conf.${i}.view default=(none)></td>
+    </tr>
+  </foreach>
+</table>
+
+<if name=confcount value=0>
+  <h2>You have no conferences defined</h2>
+</if>
+<if expr="${confcount} \l ${system.maxconfs}">
+  <h2>Create a new conference</h2>
+  <form method=post  help='do_help(%)' event=onmouseover>
+    Enter the conference number:
+    <input name=number help="3 digit conference number" size=3 title=confnum>
+    <input type=submit value="create conference"
+  </form>
+</if>
+
+<!-- allow admins global access -->
+
+<if name=url.orig glob=/admin*>
+  <set namespace=local name=check value=*>
+<else>
+  <set namespace=local name=check value=${userid}>
+</if>
+
+<if name=conf.${query.confno}.owner glob=${check}>
+
+  <!--
+    Set up form mappings.  The FormTemplate will take care of all
+    direct mappings.  We need to handle recording, host/nohost
+    and passwords specially.  That why we stuck it in the "data"
+    field.
+  -->
+
+  <!-- data=sadm:[hosted]:[hostpass]:[userpass]:[record] -->
+  <extract name=conf.${query.confno}.data glob=*:*:*:*:* prepend=extra.>
+  <if name=extra.1 value=sadm>
+    <set namespace=local name=conf.${query.confno}.hosted value=${extra.2}>
+    <set namespace=local name=conf.${query.confno}.hostpass value=${extra.3}>
+    <set namespace=local name=conf.${query.confno}.userpass value=${extra.4}>
+    <set namespace=local name=conf.${query.confno}.record value=${extra.5}>
+  <else>
+    <div class=warning>
+    Warning. This conference was created using the
+    <a href=/confadmin-advanced.html${urlpart.2}>advanced interface</a>.
+    If you edit it with this form, some data may be lost.
+    </div>
+  </if>
+
+  <form id=conform method=post  help='do_help(%)' event=onmouseover prepend="conf.${query.confno}.">
+    <table id=reference rules=cols norewrite=true>
+    <input type=hidden name=edit value="${query.confno}">
+    <tr><td><b>Conference</b></td>
+        <td>
+	  <b><get query.confno></b>
+	  (<a href=/${system.meetme}.html${urlpart.2}?confno=${query.confno}
+	      title="monitor conference"
+	   >
+	    monitor this conference
+	  </a>)
+	</td></tr>
+    <tr><td>Title</td><td>
+      <input name=title value="" help=titlehelp title=conftitle>
+    </td></tr>
+    <tr><td>Admins</td><td>
+      <input name=admins value="" help=adminhelp title=admins>
+    </td></tr>
+    <tr><td>View</td><td><select name=view help=viewhelp>
+      <option value=public selected>public
+      <option value=private>private
+      </select>
+    </td></tr>
+    <tr><td>Max users</td><td>
+      <input name=maxusers size=2 title="default=15"
+       help="maximum number of participants allowed in this conference">
+    </td></tr>
+    <tr><td>record conference</td><td>
+      <input type=checkbox name=record value="yes"
+       help="Select to record this conference"
+      >
+    </td></tr>
+    <tr><td>Conference type</td><td>
+      simple 
+      <input type=radio name=hosted value="no"
+       help="all users are treated the same"
+       onchange="dotype(0)"
+      >
+      hosted 
+      <input type=radio name=hosted value="yes"
+       help="There are two classes of users, hosts and guests"
+       onchange="dotype(1)"
+      >
+    </td></tr>
+    <tr><td>password</td><td>
+      user: <input name=userpass size=5
+       help="Normal user password.  Leave blank for none"
+      >
+      <div id=host norewrite=true class=hidden>
+        host: <input name=hostpass size=5
+         help="Host password. May not be blank!"
+        >
+      </div>
+    </td></tr>
+    <script>
+      function dotype(type) {
+        var id = document.getElementById("host");
+        if (type) {
+	  id.className="visible"
+	} else {
+	  id.className="hidden"
+	}
+      }
+      if (document.forms["conform"].hosted[1].checked) {
+        dotype(1);
+      }
+    </script>
+    <tr><td colspan=2>
+      <input type=submit name=update help="push the button" value="update conference ${query.confno}" title=update>
+      <input type=submit name=delete help="are you sure?" value="delete conference ${query.confno}" title=confdelete>
+    </td></tr>
+    <tr><td colspan=2>
+      <div id=help norewrite=true class=help>Mouse-over field help</div>
+    </td></tr>
+    </table>
+  </form>
+  </div>
+  <div id=helpoptions norewrite=true class=hidden>
+      Entries are of the form <b>pass</b>/<b>options</b>, where <b>pass</b> is the required
+      password (empty for no password), and <b>options</b> are the meetme options
+      used for that password.
+      <p>
+      To remove an entry, leave the <b>options</b> blank.  See the table at the right
+      for the valid options.
+  </div>
+  <div id=titlehelp norewrite=true class=hidden>
+      The title is spoken to each participant as they enter the conference
+      For example:
+        <i>Welcome to the <b><get name=conf.${query.confno}.title></b> conference</b></i>
+  </div>
+  <div id=adminhelp norewrite=true class=hidden>
+      Only the users on this list can modify the conference from the web interface
+  </div>
+  <div id=viewhelp norewrite=true class=hidden>
+      Public conferences are browsable, private ones are not.
+  </div>
+</if>
+</body>

@@ -1,0 +1,109 @@
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+
+# Conference Manager application defaults
+
+# standard data mappings
+
+# the "meetme list" returns 1/0, where as the event returns on/off
+talk.1=on
+talk.0=off
+
+# style sheet substitutions
+
+style.body.bg=lightgrey
+style.heading.bg=thistle
+style.table.bg=lavender
+style.help.bg=navy
+style.input.bg=thistle
+
+style.font.fg=darkslateblue
+style.help.fg=orange
+
+style.border.width=0
+style.image.height=1.2em;
+style.image.border=0;
+
+# this is for the meeting monitor
+
+style.scroll.width=450
+style.scroll.height=350
+
+# System defaults
+
+# The name of this application.
+system.name=ConMan
+# the Q to use to send AMI commands to
+system.server=ast-pbx1
+# max number of entries monitored per conference
+system.maxusers=15
+# comment out diagnostics in javascript
+system.diag=//
+# turn on debugging output on meetme page
+system.debug=0
+# the main stylesheet /${..}.css
+system.style=style
+# which "monitor" template to use
+system.meetme=monitor
+# max number of conferences per person
+system.maxconfs=3
+# max number of conferences in conference select view
+system.maxshowconfs=25
+#require email to end with this (should be blank or start with @)
+system.emaildomain=@sun.com
+# max user idle time before auto-logout (in minutes)
+system.maxidle=10
+# time between refreshing the conference page (ms) [not used anymore]
+system.confrefresh=10000
+# Queue timeout (sec).  Max time a client request will "hang" with no response
+system.queueTimeout=90
+# The conference phone number
+system.number=x18806 (XXX-XXX-4806)
+
+# monkey configuration
+system.monkeyid=666539
+user.icon.666539=monkey
+user.name.666539=monkeys!
+
+# default conference options for simple admin (temporary)
+system.hosted.host=zdToaAMsc
+system.hosted.user=zdToMwxc
+system.nonhost=zdToMcs
+
+# the list of images
+icons=face baby dog cdog beer kbd turkey
+icon=face
+
+# Title processing doesn't happen for background fetches
+# put them here instead
+
+title.iconon=talking, click to mute
+title.iconoff=listening, click to mute
+title.iconmute=muted, click to unmute
+
+# map keywords to meetme admin actions
+# these are some of the meetme actions
+
+meetmeadmin.boot=k
+meetmeadmin.louder=T
+meetmeadmin.softer=t
+meetmeadmin.reset=R
+meetmeadmin.mute=M
+meetmeadmin.unmute=m
+meetmeadmin.lock=L
+meetmeadmin.unlock=l
+meetmeadmin.muteall=N
+meetmeadmin.unmuteall=n
+
+# experimental DTMF handling
+# dtmf.X if defined, causes the message to be displayed in the web console
+# dtmf.class specifies the css class used to display the message
+
+dtmf.0=wants attention
+dtmf.class=tabon
+
+# misc stuff - don't muck with it
+confcount=0

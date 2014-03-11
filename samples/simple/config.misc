@@ -1,0 +1,12 @@
+# random test
+
+log=5
+port=7007
+
+handler=sunlabs.brazil.template.TemplateHandler
+sebug=1
+templates= set \
+	sunlabs.brazil.template.BSLTemplate \
+	sunlabs.brazil.sunlabs.MiscTemplate
+set.headers=header.
+set.class=sunlabs.brazil.template.SetTemplate

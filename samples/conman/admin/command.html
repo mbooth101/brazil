@@ -1,0 +1,51 @@
+<!--
+  vim: filetype=bsl
+  name: command.html
+-->
+
+<head>
+<title>Asterisk AMI interface</title>
+<stdinclude>
+</head>
+<body>
+<h1>Issue a command to Asterisk</h1>
+
+<!-- compute the possible asterisk servers to query -->
+<if not name=asterisk_servers>
+  (computing server list)<br>
+  <foreach name=i glob=*.class>
+    <if name=i.value glob="*AsteriskHandler">
+      <append name=servers delim=" " value=${i.name.1}>
+    </if>
+  </foreach>
+  <set name=asterisk_servers value=${servers}>
+</if>
+
+<form prepend=query.>
+  choose server:
+  <select name=server>
+    <foreach name=i property=asterisk_servers>
+      <option value=${i}><get name=${i}.server>
+    </foreach>
+  </select>
+  ami command:
+  <input name=command>
+</form>
+
+<if query.command>
+  <amicommand server=${${query.server}.queue} prepend=q action=command
+              command="${query.command}"
+  />
+  <h1>response</h1>
+  <table border>
+    <foreach name=i glob=q.* sort>
+      <tr><td><get i.name.1></td>
+      <if name=i.name.1 value=data>
+        <td valign=top><pre><get i.value></pre></td></tr>
+      <else>
+        <td><get i.value></td></tr>
+      </if>
+    </foreach>
+  </table>
+</if>
+</body>

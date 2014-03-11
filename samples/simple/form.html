@@ -1,0 +1,67 @@
+<title>Sample forms</title>
+<body bgcolor=white>
+<h1>Simple Form test</h1>
+
+<if query.type>
+  <h2>Result of form submission</h2>
+  <table border=2>
+  <caption><b><get query.type></b></caption>
+  <foreach name=i glob=query.* sort>
+    <tr><td><get name=i.name.1></td><td><get name=i.value convert=html></td></tr>
+  </foreach>
+  </table>
+</if>
+
+<h2>Form using METHOD=GET</h2>
+<form>
+  <input type=hidden name=type value="form: method=GET">
+  entry field<input name=text_entry><br>
+  <select name=select>
+    <option>html
+    <option>text
+    <option>pdf
+  </select>
+  <input type=submit value="submit">
+</form>
+
+<h2>Form using POST</h2>
+<form method=post>
+  <input type=hidden name=type value="form: method=POST">
+  entry field<input name=text_entry><br>
+  <select name=select>
+    <option>html
+    <option>text
+    <option>pdf
+  </select>
+  <input type=submit value="post data">
+</form>
+
+<h2>Form using multipart/form-data to upload</h2>
+<form  method=POST enctype=multipart/form-data>
+  <input type=hidden name=type value="form: encoding=multipart">
+  entry field<input name=text_entry><br>
+  file to upload<input type=file name=filename><br>
+  <select name=select>
+    <option>html
+    <option>text
+    <option>pdf
+  </select>
+  <input type=submit value="upload data">
+</form>
+
+<h2>Form using multipart/form-data to upload and store a file</h2>
+<form  method=POST enctype=multipart/form-data>
+  <input type=hidden name=type value="form: encoding=multipart">
+  entry field<input name=text_entry><br>
+  file to upload<input type=file name=filename1><br>
+  <!-- this causes the next file to ba saved to disk; the value is ignored -->
+  <input type=hidden name=save value="save-this-file">
+  file to upload<input type=file name=filename2><br>
+  <select name=select>
+    <option>html
+    <option>text
+    <option>pdf
+  </select>
+  <input type=submit value="upload data">
+</form>
+</body>

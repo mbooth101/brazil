@@ -1,0 +1,31 @@
+# Sample configuration for testing macros
+
+root=.
+log=5
+port=4001
+
+handler=sunlabs.brazil.server.ChainHandler
+handlers=session calc template
+
+# Use browser cookies to keep track of session information
+
+session.class=sunlabs.brazil.handler.CookieSessionHandler
+
+# Enable the expression evaluator so we can do arithmetic
+
+calc.class=sunlabs.brazil.properties.ExprPropsHandler
+
+# treat "macro.html" as a template, and enable the proper entities
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= \
+	sunlabs.brazil.template.SetTemplate \
+	sunlabs.brazil.template.BSLTemplate \
+	sunlabs.brazil.template.FormTemplate \
+	sunlabs.brazil.beanshell.BeanShellServerTemplate \
+	sunlabs.brazil.sunlabs.DateTemplate \
+	sunlabs.brazil.template.MacroTemplate
+template.query=query.
+template.debug=1
+template.init=sample.macros
+template.default=macro.html

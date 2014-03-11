@@ -1,0 +1,24 @@
+# Configuration for setting up a simple combination web proxy and server
+
+handler=	sunlabs.brazil.server.ChainHandler
+handlers=	sun file proxy
+
+# If a regular web server, dish up files
+file.class=	sunlabs.brazil.server.FileHandler
+
+# If configured as the browser's proxy, then proxy the request
+# although this proxy, as configured, doesn't cache content, it does
+# cache connections, and "upgrade" all outgoing traffic to http/1.1.
+# Thus, the more clients that use it, the faster it can respond!
+
+proxy.class=	sunlabs.brazil.proxy.ProxyHandler
+
+# This Sun Microsystems class installs a proxy-decider into the server
+# It understands the Sun specific firewall setup.
+
+sun.class=	sunlabs.brazil.proxy.SunProxy 
+
+# If you neet to communicate with an additional upstream proxy,
+# it should be configured here:
+# proxyHost=	my-proxy.com
+# proxyPort=	8080

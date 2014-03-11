@@ -1,0 +1,27 @@
+#
+# use Include and Extract to use the google translation "service"
+#
+
+log=5
+port=5555
+
+handler=template
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= \
+   sunlabs.brazil.template.SetTemplate \
+   sunlabs.brazil.template.IncludeTemplate \
+   sunlabs.brazil.template.BSLTemplate 
+template.debug=1
+template.query=query.
+
+# for internal SUN use only
+# template.proxy=webcache.sfbay:8080
+
+# translate a phrase into the following languages (from english)
+
+href=http://translate.google.com/translate_t
+
+lang.es=spanish
+lang.de=german
+lang.fr=french

@@ -1,0 +1,31 @@
+<title>Mail sending example</title>
+
+<if query.to>
+  Attempting to send email to <get query.to>...<br>
+  <sendmail
+      to=${query.to} from=${query.from} subject=${query.subject}
+      body=${query.body}
+  >
+  <foreach name=i property=query.cc>
+     <param name=cc value=${i}>
+     * ccing: <get i><br>
+  </foreach>
+  </sendmail>
+  <if template.error>
+    Error sending email: <get template.error>
+  <else>
+    Email sent to <get query.to>
+  </if>
+</if>
+
+<h1>Compose email message</h1>
+<form method=post prepend=query.>
+  to:<input name=to><br>
+  from:<input name=from><br>
+  subject:<input name=subject><br>
+  cc:<input name=cc>(white space separated list)<br>
+  <textarea name=body rows=4 cols=20><get
+      name=query.body default="Enter email text here"
+  ></textarea><br>
+  <input type=submit>
+</form>

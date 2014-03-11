@@ -1,0 +1,51 @@
+<project name="Brazil" default="all">
+
+  <!-- build.properties can be used to override default properties -->
+  <property file="build.properties"/>
+
+  <!-- This is where the class files will be deposited -->
+  <property name="CLASSES" value="classes"/>
+
+  <!-- The directory containing the extra jar's that (optional) parts of Brazil need -->
+  <property name="LIB" value="libs"/>
+
+  <!-- Set to yes if you want to see deprecation information -->
+  <property name="DEPRECATION" value="no"/>
+
+  <!-- Set to yes if you want -g passed to javac -->
+  <property name="DEBUG" value="yes"/>
+
+  <!-- Create class files that will run in a 1.1 JVM -->
+  <property name="TARGET" value="1.1"/>
+
+  <target name="javac">
+    <mkdir dir="${CLASSES}"/>
+    <javac srcdir="."
+           destdir="${CLASSES}"
+           includes="sunlabs/**/*.java"
+           deprecation="${DEPRECATION}"
+           debug="${DEBUG}"
+           target="${TARGET}">
+      <classpath>
+	<fileset dir="${LIB}">
+	  <include name="*.jar"/>
+	</fileset>  
+      </classpath>	
+    </javac>
+  </target>
+
+  <target name="all" depends="javac">
+    <jar destfile="brazil.jar" index="yes">
+      <manifest>
+        <attribute name="Main-Class" value="sunlabs.brazil.server.Main"/>
+      </manifest>
+      <fileset dir="${CLASSES}" includes="**/*.class"/>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete file="brazil.jar"/>
+    <delete dir="${CLASSES}"/>
+  </target>
+
+</project>

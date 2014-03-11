@@ -1,0 +1,20 @@
+<title>Insert Monkeys</title>
+<link rel="stylesheet" type="text/css" href="/style.css" title="default">
+<h1>Play with Monkeys</h1>
+
+<if query.conf>
+  <amicommand server=${system.server} prepend=q
+     action=originate
+     Channel=local/${query.conf}@ami-joinmeeting
+     Application=Playback
+     Callerid=monkeys
+     data=tt-monkeys
+     async=true
+  />
+  <h2>here come the monkeys!</h2>
+  <foreach name=i glob=q.* sort><get i.name>=<get i.value><br></foreach>
+</if>
+<form>
+Enter conference number:<input name=conf size=3>
+</form>
+<h4><a href=/conf.html>Back to main conference page</a></h4>

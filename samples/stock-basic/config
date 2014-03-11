@@ -1,0 +1,87 @@
+# sample stock grabber configuration using poll poll2  handler
+
+handler=main
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=map session poll calc template
+
+# Use "basic authentication" for authentication and session control
+# - Authentication is required for all URL's beginning with "/my"
+# - The "ident" parameter specifies a dynamic authorization table.  The
+#   keys are the authentication tokens (base64 encoded id:password)
+#   and the corrosponding values are used for the session ID.
+#   The ident value is chosen so we may manipulate the authorization
+#   table using <set..> and <get..> with the proper namespace qualifier.
+#   In this example,
+#       "session.ident=accounts:data"      combined with
+#       template.sessionTable=data         allows
+#       <set name="dXNlcjpwYXNzd29yZA=" value="user" namespace="accounts">
+#   to create A basic authentication account for user "user", with
+#   a password of "password", and provide a SessionID token of "user".
+#   (dXNlcjpwYXNzd29yZA= is the Base64 encoded version of "user:password").
+
+session.class=sunlabs.brazil.handler.BasicAuthHandler
+session.prefix=/my
+session.ident=accounts:data
+session.realm=stock portfolio
+session.message=  \
+    <body bgcolor=white> \
+    <h2>Authorization canceled</h2> \
+    <a href=/register.html>Click here to register.</a> \
+    </body>
+
+# Fetch some common stock quotes from yahoo periodically.
+# "format" and "match" parameters cause polling to occur only
+# when the stock market is open.  "Match" assumes Pacific Time.
+# You will need to change the "proxy" setting for your own use, or
+# override it on the command line.
+
+poll.class=sunlabs.brazil.handler.RePollHandler
+poll.interval=30
+poll.format=EEE-kk-mm
+poll.match=^(Mon|Tue|Wed|Thu|Fri)-(0[6-9]|1[0-2])
+poll.fast=1
+poll.prepend=stock
+poll.proxy=hack.eng:7071
+poll.re=extract
+poll.namespace=stock
+poll.sessionTable=data
+poll.url=http://quote.yahoo.com:80/d/quotes.csv?f=sl1d1t1&e=.csv&s=AA+AAPL+ADBE+ADCT+ADPT+ADSK+AEP+AGC+AIG+AIT+ALD+ALT+ALTR+AMAT+AMGN+AMP+AMPM+AMZN+ANDW+APCC+APOL+ARC+ASND+ATHM+ATML+AVP+AXP+BA+BAC+BAX+BBBY+BC+BCC+BDK+BEL+BGEN+BHI+BMCS+BMET+BMY+BNI+BS+C+CAT+CATP+CBRL+CBS+CEFT+CEN+CEXP+CGP+CHA+CHIR+CI+CL+CMCSK+CMGI+CMVT+CNTO+COL+COMR+COMS+COST+CPB+CPWR+CSC+CSCO+CTAS+CTXS+DAL+DD+DELL+DIS+DLTR+DOW+EFII+EK+ERICY+ERTS+ETR+F+FAST+FDLNB+FDX+FHCC+FISV+FLR+GD+GE+GENZ+GM+HAL+HD+HET+HIG+HM+HNZ+HON+HRS+HWP+IBM+IFF+IMNX+INTC+INTU+IP+JNJ+JPM+KLAC+KM+KO+LCOS+LLTC+LNCR+LTD+LVLT+MAY+MCCRK+MCD+MCHP+MCLD+MER+MKG+MLHR+MMM+MO+MOB+MOLX+MRK+MSFT+MTC+MUEI+MXM+NETA+NOBE+NOVL+NSC+NSM+NT+NTLI+NWAC+NXTL+ONE+ORCL+OXY+PAYX+PCAR+PEP+PG+PHSYB+PMTC+PNU+PRD+PSFT+QCOM+QNTM+QTRN+QWST+RAL+ROK+RTN+RTRSY+RXSD+S+SANM+SBC+SBUX+SIAL+SLB+SNPS+SO+SPLS+SPOT+SSCC+STEI+SUNW+T+TAN+TECD+TEK+TLAB+TXN+UNPH+USAI+UTX+VRTS+VTSS+WCOM+WMT+WTHG+XLNX+XON+YHOO
+
+# This is the regular expression that extracts the csv format file from yahoo
+# into a name/value "properties" list. The "names" parameter assignes names
+# to the extracted fields instead of numbers, and the "key" uses the first
+# field, or the stock symbol for the other index.
+
+extract.exp="([A-Z]+)",([0-9.]+),"([0-9/]+)","([0-9:AMP]+)"
+extract.names=X symbol price date time
+extract.key=1
+
+# Insert the calculator "Smart Properties" so we can do arithmetic, and
+# compute portfolio values
+
+calc.class=sunlabs.brazil.properties.ExprPropsHandler
+
+#
+# Map the url's of the selct.html, value.html and stock.html
+# so we can share them with the "other" stock demo.
+#
+
+map.class=sunlabs.brazil.handler.UrlMapperHandler
+map.match=/(stock|value|select).html
+map.replace=/my_\\1.html
+
+#
+# The application is written as a set of html "Templates" that
+# use the indicated tag processing options.
+#
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates= sunlabs.brazil.template.SetTemplate \
+                    sunlabs.brazil.template.BSLTemplate \
+                    sunlabs.brazil.tcl.TclServerTemplate \
+                    sunlabs.brazil.template.AddHeaderTemplate \
+                    sunlabs.brazil.sunlabs.SubstAllTemplate 
+template.sessionTable=data
+template.query=query.
+template.headers=header.
+template.debug=1

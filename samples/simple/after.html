@@ -1,0 +1,21 @@
+<title>Testing the after template</title>
+<h1>Testing the after template</h1>
+
+<set namespace=local name=LOCAL value=before>
+<set namespace=server name=SERVER value=before>
+<after ms=5000>
+  <set namespace=server name=SERVER value="after one">
+  <set namespace=local name=LOCAL value="after one">
+  <debug ONE:LOCAL=${LOCAL} SERVER=${SERVER}>
+  <after ms=5000>
+    <set namespace=server name=SERVER value="after two">
+    <set namespace=local name=LOCAL value="after two">
+  <debug TWO:LOCAL=${LOCAL} SERVER=${SERVER}>
+  </after>
+</after>
+<set namespace=local name=LOCAL value=done>
+<set namespace=server name=SERVER value=done>
+<debug DONE:LOCAL=${LOCAL} SERVER=${SERVER}>
+<p>
+After this page is completed, 
+The two afters are run 5 seconds apart.

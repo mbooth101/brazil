@@ -1,0 +1,24 @@
+<title>This page can modify the template</title>
+<body>
+  You can invent your own "meta" tags for your html documents that will
+  convey (you guessed it) <b>meta</b> information between the page
+  and the template.
+  <meta name="see" content="see.html">
+  <p>
+  In this example, we've defined a <b>see also</b> link at the
+  bottom of the navigation bar that may is set from within a page by
+  adding:
+  <pre>
+  &lt;meta name="see" content="see.html"&gt;
+  </pre>
+  In addition to effecting the template, any page has access to
+  any of the current data contained in the server for this request
+  and session.  Here are the currently available data items that
+  may be used:
+  <table border>
+  <th>name</th><th>current value</th></tr>
+  <foreach name=i glob=* sort>
+    <tr><td><get name=i.name></td><td><get name=i.value convert=html></td></tr>
+  </foreach>
+  </table>
+</body>

@@ -1,0 +1,92 @@
+<title>Stock Selector</title>
+<body bgcolor=white>
+
+<!-- process form submition: new share amounts -->
+
+<if name=query.command>
+  <h2>Changing stock portfolio</h2>
+  <ul>
+  <foreach name=i glob=query.S.*>
+    <if not name=i.value>
+      <set name=myStock.${i.name.1}>
+      <li>deleting <get name=stock.${i.name.1}>
+    <elseif not name=myStock.${i.name.1} value=${i.value}>
+      <li>Changing shares of <get stock.${i.name.1}> to
+	  <b><get name=i.value></b> from <b><get name=myStock.${i.name.1}></b>
+      <set name=myStock.${i.name.1} value=${i.value}>
+    </if>
+  </foreach>
+  </ul>
+</if>
+
+<!-- change stocks in portfolio -->
+
+<if name=query.select>
+  <h2>Adding stocks:</h2>
+  <ul>
+  <foreach name=i glob=query.S.*>
+    <if not name=myStock.${i.name.1}>
+      <set name=myStock.${i.name.1} value=0>
+      <li><b><get name=stock.${i.name.1}></b>
+    </if>
+  </foreach>
+  </ul>
+</if>
+
+<if name=myStock.* any>
+   <h2>Selected stocks</h2>
+  Edit your number of shares here.
+  To delete a stock, set the field to "empty".
+  <form method=post>
+    <table border>
+    <caption>My stocks</caption>
+    <foreach name=i glob=myStock.* sort>
+      <tr><td><get name="stock.${i.name.1}"></td>
+	  <td><input size=5 name="S.${i.name.1}" value="${i.value}"></td>
+      </tr>
+    </foreach>
+    </table>
+    <input type=hidden name=command value=updateShares>
+    <input type=submit value="update share amounts">
+  </form>
+<else>
+  <h3>Select stocks below to begin your portfolio</h3>
+</if>
+
+
+<a href=/index.html>home</a> |
+<b>select stocks</b> |
+<a href=/value.html>my portfolio</a> |
+<a href=/stock.html>all stocks</a>
+
+<!-- list of available stocks -->
+
+<form method=post>
+<input type=submit value="Select Stocks">
+<table border><tr>
+   <foreach name=index list="dow nas sp">
+     <td valign=top>
+       <table>
+       <caption>Index: <get index></caption>
+       <foreach name=id property=${index}>
+	 <tr><td>
+	   <if name=myStock.${id}>
+	     <input type=checkbox name=S.${id} CHECKED>
+           <else>
+	     <input type=checkbox name=S.${id}>
+           </if>
+           <get name=stock.${id}></td></tr>
+       </foreach>
+       </table>
+     </td>
+   </foreach>
+  </tr></table>
+  <input type=hidden name=select value=updateShares>
+  <input type=submit value="Select Stocks">
+  </form>
+<hr>
+<a href=/index.html>home</a> |
+<b>select stocks</b> |
+<a href=/value.html>my portfolio</a> |
+<a href=/stock.html>all stocks</a>
+</body>

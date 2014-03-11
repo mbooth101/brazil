@@ -1,0 +1,128 @@
+<!--
+  Simple Asterisk AGI example (agi.html) .  This allows Asterisk to
+  interact with a web page of forwarded extensions. The dial plan
+  should contain a  line like:
+    exten => s,1,Agi(agi://my.host.com/agi.html)
+    ...
+  when a call comes in.  The AGI comes here, looks up a forwarding
+  extension, and goes there if it is set.  The forwarding table is
+  maintained by a browser.
+-->
+
+<!--
+  The AGI request comes here.  All the pertinent information comes
+  in to variables of the form agi_*.  All session id's from AGI pseudo
+  requests are prefixed with the agi handler prefix.  See if there is
+  an extension mapping, and set the new extension if there is.  Otherwise
+  proceed as normal. We'll keep simple statistics to demonstrate that
+  data can flow both ways between the AGI and the web application.
+
+  Any sequence of agi commands can be invoked using the "agi" tag, with
+  the results placed in the agi_status variable.
+-->
+
+<import namespace=extensions>
+<if name=SessionID glob=agi.*>
+  <increment namespace=server name=stat.calls>
+  <if name=ext.${agi_extension}.${agi_callerid}>
+    <agi command="set extension ${ext.${agi_extension}.${agi_callerid}}">
+    <increment namespace=server name=stat.mapped>
+  <elseif name="ext.${agi_extension}.*">
+    <agi command="set extension ${ext.${agi_extension}.*}">
+    <increment namespace=server name=stat.*>
+  </if>
+  <abort>
+</if>
+
+<!--
+  Any other request must be an ordinary web browser.  Display a list
+  of extensions and what they are mapped to.
+-->
+
+<head>
+  <title>Sample Brazil/AGI extension mapper</title>
+  <style> .notice {background-color: #F00} </style>
+</head>
+
+<body>
+
+<h1>Extension forwarding</h1>
+<div class=notice>
+<ul>
+
+<!--
+  Read in the extension table if we are the first request.  In a real
+  application we would include the extension table as part of starting
+  the server (but this makes it self-contained).
+-->
+
+<if not name=initialized>
+  <set namespace=server name=initialized value=true>
+  <li>Reading in extensions table
+  <namespace name=extensions load=extensions.cfg />
+</if>
+
+<!--
+  handle updates to the extension table here, and save the current
+  table state
+-->
+
+<if query.submit>
+  <namespace name=extensions>
+  <if name=query.forward value="">
+    <set name=ext.${query.ext}.${query.callerid}>
+    <li>Unsetting entry for extension <get query.ext>,<get query.callerid>
+  <else>
+    <set name=ext.${query.ext}.${query.callerid} value=${query.forward}>
+    <li>Updating entry for <get query.ext>, <get query.callerid>
+  </if>
+  </namespace>
+  <namespace name=extensions store=extensions.cfg />
+</if>
+</ul>
+</div>
+
+<!-- display the forwarding table -->
+
+<table border>
+<tr><th>extension</th><th>Caller-ID*</th><th>forward to</th></tr>
+<foreach name=i glob=ext.*.* sort numeric>
+  <tr><td><get i.name.1></td><td><get i.name.2></td><td><get i.value></td></tr>
+</foreach>
+</table>
+<hr>
+
+<!-- The call statistics -->
+
+<h2> Call statistics</h2>
+Calls forwarded by callerid: <get name=stat.mapped default=0><br>
+Calls forwarded by *: <get name=stat.* default=0><br>
+Total calls checked: <get name=stat.calls default=0><br>
+
+<!--
+  Display the update form.  By using "prepend=query." on our form tag,
+  the FormTemplate will automatically refill in each form element with
+  its previously entered value.
+-->
+
+<h2>Add or Edit an entry:</h2>
+<form method=post prepend=query.>
+  <table border>
+  <tr><td align=right>called extension</td>
+      <td><input name=ext value="" size=5></td>
+  </tr>
+  <tr><td align=right>called from</td>
+      <td><input name=callerid value="*" size=10></td>
+  </tr>
+  <tr><td align=right>forward to<br>(leave blank to remove entry)</td>
+      <td><input name=forward value="" size=5></td>
+  </tr>
+  <tr><td colspan=2><input type=submit name=submit value=update></tr></tr>
+  </table>
+  * Use a '*' to match any caller id number
+</form>
+
+<foreach name=i glob=* sort>
+<get i.name>=<get i.value><br>
+</foreach>
+</body>

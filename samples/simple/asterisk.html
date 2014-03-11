@@ -1,0 +1,249 @@
+<!--
+  Self contained Brazil ajax asterisk AMI demo.
+  This demo shows the status of calls in real time, based on the
+  selected extensions.
+ -->
+
+<!--
+  This section returns the "display list" from a background session.
+  The results are returned to XMLhttpRequest as text
+-->
+
+<if name=url.orig glob=*background_*>
+
+  <!--
+     One time initialization.  The variables "events" and "fields"
+     are used to determine what information is displayed. The macro
+     "section" is used to define where the background markup ends-up
+     on the page.
+  -->
+
+  <if not name=initialized>
+    <definemacro name=section>
+      <!-- div=${div#none} class=${class} -->
+    </definemacro>
+
+    <!-- ask Asterisk to send us all "Event" notifications -->
+
+    <register key="Event" exp=".*" queue=${SessionID}>
+
+    <set name=events value="Newchannel Newexten Newstate Hangup">
+    <set name=fields
+     value="Server Extension Date Application AppData CallerID State Context"
+    >
+    <set name=initialized value=true>
+    <set name=match value=*>
+  </if>
+
+  <!--
+    Wait here for an update.  It can come either from Asterisk, or from
+    a form submission (via the foreground session)
+  -->
+
+  <dequeue name=${SessionID} prepend=q. timelimit=30>
+  <date set=q.date format="%b %d %T">
+  <section div=now /><get q.date>
+
+  <!-- timeout: update the date and return -->
+
+  <if name=q.error value=timelimit>
+    <abort>
+  </if>
+
+  <!-- The extension match was changed, update the value and the display -->
+
+  <if q.query.match>
+    <debug Updating match as ${q.query.match}>
+    <set name=match value=${q.query.match}>
+    <section div=match /><get match>
+    <section div=status />Monitoring extensions updated
+    <abort>
+  </if>
+
+  <!-- this must be an Asterisk event, deal with it -->
+
+  <if name=q.Extension glob=${match}>
+    <section div=${q.Event} />
+    <foreach name=field property=fields>
+      <get field>=<get name=q.${field} default=n/a ><br>
+    </foreach>
+  <else>
+    <section div=result />
+    Event skipped: <get q.Extension>
+    doesn't match <get match>.
+  </if>
+  <abort>
+</if>
+
+
+<!--
+  This is the "foreground" session.  Reloads and form submissions go
+  here. We import the background namespace in case we need to refer
+  to variables manipulated in the background session.
+-->
+
+<import namespace=BACKGROUND.${SessionID}>
+
+<!-- form submit goes here. The XMLHttp request will ignore the results, so
+     enqueue the action to happen in the background.
+-->
+
+<if query.match>
+  <enqueue name=BACKGROUND.${SessionID} data=query.match from=command>
+  <abort>
+</if>
+
+<!-- 
+   This is the "main" page: basic div definitions and javascript. 
+ -->
+
+<head>
+<title>Self-contained Brazil Ajax Asterisk demo</title>
+
+<!-- define some styles we can manipulate -->
+
+<style>
+  .warning {background-color: #F00}
+  .busy {background-color: #880}
+  .ok {background-color: #0F0}
+</style>
+
+<!--
+  Each XMLHttprequest returns a structured document that is easy to parse
+  using "split", allowing us to set content and styles of arbitrary portions
+  of the page.  Note this implies that split accepts regular expressions
+  (e.g. firefox).  The "section" macro generates the right stuff for "split".
+-->
+
+<script language=javascript>
+  var dosplit=/<!-- *div=([a-zA-Z0-9_]+) *(class=([a-zA-Z0-9_]+))?[^-]*-->/
+  var fetching=0;
+
+  /*
+   * Process the text returned from a background fetch.
+   * For this example, the only dymanic changes to the existing page are:
+   * - Changing the content of a named div
+   * - changing the CSS class for a named div
+   * - the special div named "eval" is run as javascript
+   * The background session (markup above) generates hunks of content
+   * delimited by special comments that specify the DIV name and CSS class
+   * the current hunk belongs to.
+   */
+
+  function process(req) {
+      var sections = req.responseText.split(dosplit);
+      for(var i=1; i<sections.length; i+=4) {
+	 var div=sections[i];
+	 var cls=sections[i+2];
+	 var content=sections[i+3];
+	 if (div == "eval") {
+	     eval(content);
+	     continue;
+	 }
+	 setState(div, content, cls);
+      }
+  }
+
+  /*
+   * This function uses XMLHTTPrequest to fetch
+   * content from the server in the background.
+   * It processes the returned text content, then
+   * schedules itself to run again.
+   */
+
+  function fetchUpdate() {
+    var req;
+
+    // This prevents multiple fetches at once for users with
+    // happy reload button trigger fingers.
+
+    if (fetching > 0) return 0;
+    fetching=1;
+
+    req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+	setState("status", "processing server data ...", "busy");
+	process(req);
+	fetching=0;
+	setTimeout('fetchUpdate()', 100);
+	setState("status", "processing server data ... done", "ok");
+      }
+    }
+    req.open("GET", "/background_asterisk.html");
+    setState("status", "waiting for server data ...", "busy");
+    req.send(null);
+    return 1;
+  }
+
+  // submitless form submit
+
+  function dosubmit(id) {
+    setState("status", "sending form ...", "busy");
+    var form = document.getElementById(id);
+    var items = form.elements;
+    var sep = "?"
+    var query="";
+    for(var i=0; i<items.length; i++) {
+      query += sep + items[i].name + "=" + escape(items[i].value);
+	 sep = "&";
+    }
+    req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+	setState("status", "form submitted", "ok");
+      }
+    }
+    req.open("GET", "/asterisk.html" + query);
+    req.send(null);
+    return 1;
+  }
+
+  // change the state of an object
+
+  function setState(id, content, cls) {
+     var d = document.getElementById(id);
+     if (d != null)  {
+	if (cls.length > 0) d.className=cls;
+	if (content.match(/[^ \t\n]/)) d.innerHTML = content;
+     }
+  }
+
+</script>
+</head>
+
+<!--
+  This is the main page.
+  The entries are filled in by process()
+-->
+
+<body bgcolor=white onload='fetchUpdate()'>
+<h1>Monitor calls from Asterisk (ext: <span id=match><get match></span>)</h1>
+last update: <span id=now>-</span><br>
+<table border><tr>
+  <caption>Recent Events</caption>
+  <foreach name=event property=events>
+    <th><get event></div></td>
+  </foreach>
+  </tr><tr>
+  <foreach name=event property=events>
+    <td valign=top><div id=${event}>(n/a)</div></td>
+  </foreach>
+</tr></table>
+<div id=result>(unmatched results)</div>
+
+<!--
+  Choose which extensions to monitor.  We submit the form via an
+  XMLHttprequest to avoid redrawing the entire page.
+-->
+
+<form prefix=query. id=form onsubmit='return false';>
+  Extension to monitor (glob): <input name=match value=${match}>
+  <input type=submit onclick='dosubmit("form")'>
+</form>
+
+<!-- display status -->
+
+<hr>
+Status: <span id=status>-</span>
+</body>

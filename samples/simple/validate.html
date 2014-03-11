@@ -1,0 +1,54 @@
+<title>Validate template test</title>
+<h1>Validate template test</h1>
+
+<set name=error1 value="">
+<set name=error2 value="">
+  
+<if query.submit>
+  <!-- call the validate template -->
+  <validate glob=query.* prepend=validate. types=validate.types.${1}>
+  <!-- it is up to the developer to catch these errors and convert them to something the user expects -->
+  <if validate.numfailed>
+     You have entered an invalid zipcode for this area OR an invalid email address.<br>
+     Failed <get validate.numfailed> validations.<br>
+     <foreach name=i list=${validate.failedlist}>
+       <extract name=i glob="*:*">
+          <if name=i.1 value="query.1">
+            <if name=i.2 glob="*numeric*">
+               <set name=error1 value="${error1}\lbr\g-You must enter a numeric value. ">     
+            <elseif name=i.2 glob="*zipcode*">
+               <set name=error1 value="${error1}\lbr\g-You must enter a 5 digit zipcode. ">
+            <elseif name=i.2 glob="*arearange*">
+               <set name=error1 value="${error1}\lbr\g-You must enter a zipcode between 25000 and 50000. ">
+            </if>
+          <elseif name=i.1 value="query.2">
+             <if name=i.2 glob="*glob*">
+               <set name=error2 value="${error2}\lbr\g-You must enter a valid email. ">     
+            <elseif name=i.2 glob="*max*">
+               <set name=error2 value="${error2}\lbr\g-Your email is too long. ">
+            <elseif name=i.2 glob="*min*">
+               <set name=error2 value="${error2}\lbr\g-Your email is too short. ">
+            </if>
+          </if>                 
+     </foreach>    
+  </if> 
+</if> 
+
+<p>
+
+<form prepend=query. method=post name=myform>
+   <table>
+      <tr>
+         <td>Enter your zipcode: <input type=text name=1><br>
+         <span style='background:#FF0000'><get error1><span></td>
+      </tr>
+      <tr>
+         <td>Enter your email: <input type=text name=2><br>
+         <span style='background:#FF0000'><get error2><span></td>
+      </tr>   
+   </table>
+   <input type=submit name=submit value=submit><br>
+   
+</form>
+
+

@@ -1,0 +1,146 @@
+<!--
+   Build an entire site in 1 page, by using the url to determine the function.
+   This site allows user's to "vote" for their favorite states.
+   Up to 3 state may be chosen per user.
+-->
+
+<title>Brazil State Voting Demo</title>
+<body bgcolor=white>
+<center>
+
+<!-- display  my picks -->
+
+<if name=url.1 value=mine>
+  <if gotCookie>
+    <h2>My Picks</h2>
+    <ul>
+    <foreach name=i glob=myvote.* sort>
+      <li><a href="${i.name.1}"><get name="state.${i.name.1}"></a><br>
+      <img src=${imagebase}${state.${i.name.1}}.gif width=150 
+	  alt="${i.name.1} rules!">
+    </foreach>
+    </ul>
+  <else>
+    <h2>No cookies, no Picks!</h2>
+  </if>
+
+<!-- display top vote getters -->
+
+<elseif name=url.1 value=favorites>
+  <h2>Top states</h2>
+  <table border>
+  <tr><th>State</th><th>votes</th</td>
+  <foreach name=i glob=votes.* sort="${i.value}" numeric reverse>
+    <tr><td><get name=state.${i.name.1}></td><td><get i.value></td></tr>
+  </foreach>
+  </table>
+
+<!-- Display a state map -->
+
+<elseif name=state.${url.1}>
+  <set local name=state value=${state.${url.1}}>
+  <h2>Welcome to <get state></h2>
+
+  <!-- vote for this state -->
+
+  <font color=orange>
+  <if query.vote>
+    <if expr="myvotes \g= maxvotes">
+      <get maxvotes> states already voted for:
+      <foreach name=i glob=myvote.* sort>
+	<a href=${i.name.1}><get i.name.1></a>
+      </foreach>
+    <else>
+      <get state> rules!
+      <set name=myvote.${url.1} value=1>
+      <increment namespace=${SessionID} name=myvotes>
+      <increment namespace=server name=votes.${url.1}>
+    </if>
+  </if>
+
+  <!-- un-vote for this state -->
+
+  <if query.unvote>
+    <get state> sucks!
+    <set name=myvote.${url.1}>
+    <increment namespace=${SessionID} name=myvotes incr="-1">
+    <increment namespace=server name=votes.${url.1} incr="-1">
+    <if name=votes.${url.1} value="0">
+      <set namespace=server name=votes.${url.1}>
+    </if>
+  </if>
+  </font>
+
+  <!-- display the image -->
+
+  <br>
+  <if query.fullsize>
+    <img src=${imagebase}${state}.gif alt=${url.1}>
+  <else>
+    <a href=${url.0}?fullsize=true>
+      <img src=${imagebase}${state}.gif width=${imagewidth} alt=${url.1}>
+    </a><br>
+    Click on image to see a full size version
+  </if>
+  <br>
+
+  <!-- only allow voting when cookies are enabled -->
+
+  <if gotCookie>
+    <form method=post>
+    <if name=myvote.${url.1}>
+      <input type=submit name=unvote value="un-vote for ${state}">
+    <else>
+      <input type=submit name=vote value="vote for ${state}">
+    </if>
+    </form>
+  </if>
+
+<!-- display main page -->
+
+<else>
+  <h1>Select a State</h1>
+  <p>
+  Welcome to the Brazil voting demo.  This example demonstrates how
+  to build an entire site out of one page template.  The site presents
+  various views of 50 state maps, and allows each user to select up to
+  <get maxvotes> favorites.
+  Ordinary html pages can be added, simply by creating the html files, and
+  adding the appropriate links.  The page template, which produces the
+  rest of the site is selected for all urls that don't have corrosponding 
+  files.
+  <p>
+  The numbers after the states (if any) indicate the number of
+  votes recorded for that state.
+  <table border=1><tr>
+  <foreach name=i glob=state.* sort=${i.value}>
+    <td><nobr><a href=${i.name.1}><get i.value></a>
+    <if name=votes.${i.name.1}>
+      (<get name=votes.${i.name.1}>)
+    </if>
+    </nobr></td>
+    <if expr="count % 5 == 4">
+      </tr><tr>
+    </if>
+    <increment name=count>
+  </foreach>
+  </tr></table>
+</if>
+<hr>
+
+<!-- short cuts to other states -->
+
+<b>
+<a href="/">home</a>|
+<a href=favorites>top states</a>|
+<a href=mine>my picks</a>|
+</b>
+<foreach name=i glob=state.* sort>
+  <if name=i.name.1 value=${url.1>
+     <font size=+1><b><get i.name.1></b></font>|
+  <else>
+     <a href=${i.name.1}><get i.name.1></a>|
+  </if>
+</foreach>
+</center>
+</body>

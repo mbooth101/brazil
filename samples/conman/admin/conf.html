@@ -1,0 +1,167 @@
+<!-- 
+  vim: filetype=bsl
+
+  Main conferencing page.  choose a conference to monitor
+-->
+<head>
+<title>conference selection</title>
+<cookiecheck>
+<uniquewindows>
+<checklogin>
+<stdinclude hasform=true>
+</head>
+<body>
+
+<!-- get the running conferences, and put them in a usable form -->
+
+<getconfs>
+<amicommand
+ server=${system.server} prepend=q action=command
+ command="meetme"
+>
+<extract all=true name=q.data prepend=get
+  match="\n([0-9]+)[ \t]+0*([0-9]+)[ \t]+([^ \t]+)[ \t]+([0-9:]+)[^\n]*"
+  map="num count marked age"
+>
+
+<foreach name=i property=get.matchlist>
+  <set name=age.${get.${i}.num} value=${get.${i}.age} namespace=local>
+  <set name=num.${get.${i}.num} value=${get.${i}.count} namespace=local>
+</foreach>
+
+<!--
+  At this point, 
+  we have all active conferences in get.*, and all conferences
+  in conf.*
+-->
+
+
+<if name=url.orig glob=/admin*>
+  <set namespace=local name=action value=/admin/${system.meetme}>
+<else>
+  <set namespace=local name=action value=/${system.meetme}>
+</if>
+
+
+<if name=message>
+  <span class=notice><get message></span>
+  <set name=message>
+</if>
+
+<if query.needpass>
+  <form method=post action=${action}.html${urlpart.2} prepend=query.>
+    Conference <b><get query.confno></b> passcode:
+    <input type=hidden name=confno value="">
+    <input type=password name=pswd size=5>
+    <input type=submit value=submit>
+  </form>
+</if>
+
+<h3>Choose a conference to monitor</h3>
+
+<form prepend=query.>
+  Filter conferences by their titles:
+  <input name=restrict value="" size=15
+   title="search terms are regular expressions or-d together"
+  >
+  <input type=submit value=submit>
+</form>
+<if name=query.restrict>
+  <foreach name=i property=query.restrict>
+    <append name=match value=${i} delim=|>
+  </foreach>
+  <set namespace=local name=highlight.highlight value=${match}>
+<else>
+  <set namespace=local name=match value=.>
+</if>
+
+<form method=post action=${action}.html${urlpart.2} prepend=x>
+<table rules=cols>
+  <colgroup span=5></colgroup>
+  <tr>
+    <th>conference<br>number</th>
+    <th>owner</th>
+    <th>title</th>
+    <th>role</th>
+    <th>participants</th>
+    <th>Age</th>
+  </tr>
+  <foreach name=i property=conf.list sort numeric>
+
+    <!-- only show public or admin conferences -->
+
+    <if not name=conf.${i}.title match=${match}>
+      <continue>
+    </if>
+
+    <if name=conf.${i}.admins match="(^| )${userid}( |$)">
+      <set namespace=local name=perm value=admin>
+    <elseif name=conf.${i}.view value="public">
+      <set namespace=local name=perm value=view>
+    <elseif name=url.orig glob=/admin*>
+      <set namespace=local name=perm value=boss>
+    <else>
+      <continue>
+    </if>
+
+    <tr>
+      <td>
+        <input type=submit name=confno value=${i}
+         title="monitor me"
+	>
+        <if name=conf.${i}.owner value=${userid}>
+	  <a href="/confadmin-simple.html${urlpart.2}?confno=${i}"
+	     title="edit conference"
+	  >(edit)
+	  </a>
+          <increment name=mine>
+	</if>
+      </td>
+      <td>
+	  <get name=conf.${i}.owner>
+      </td>
+      <td><highlight><get name=conf.${i}.title></highlight></td>
+      <td><get perm></td>
+      <if name=num.${i}>
+        <td><get name=num.${i}></td>
+	<td><get name=age.${i}></td>
+      <else>
+        <td colspan=2 class=center>(not active)</td>
+      </if>
+    </tr>
+    <if expr="${displayed} \g= ${system.maxshowconfs}">
+      <break>
+    </if>
+    <increment name=displayed>
+  </foreach>
+  <tr>
+    <td><input name=newconf size=5 title="enter a number here"></td>
+    <td colspan=4>
+      <input type=submit
+       value="Choose an unlisted conference"
+      >
+    </td>
+  </tr>
+  <tr><th colspan=5 class=center>
+     Displaying <get displayed>/<get conf.total> conferences.
+   </td></tr>
+</table>
+</form>
+<a href="/confadmin-simple.html${urlpart.2}">
+  <if name=mine>
+    Create (or edit) my conferences
+  <else>
+    Create my own conference
+  </if>
+</a>
+
+</body>
+
+<!--
+
+Conference password
+  <input type=password name=pswd size=5
+   title="This is the passcode required to join the conference from a telephone"
+  >
+if required (numbers only)
+-->

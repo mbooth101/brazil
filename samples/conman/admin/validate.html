@@ -1,0 +1,130 @@
+<head>
+  <title>account management</title>
+</head>
+<body>
+<import namespace=register />
+
+<!-- save the user registrations -->
+
+<if query.save>
+   <namespace name=register store=config.users />
+   <div class=info>User namespace saved</div>
+</if>
+
+<!-- load the user registrations -->
+
+<if query.load>
+  <namespace name=register clear=true />
+  <namespace name=register load=config.users />
+  <div class=info>User namespace restored</div>
+</if>
+
+<!-- remove a user -->
+
+<if query.delete>
+  <div class=info> <get query.user> removed </div>
+  <foreach name=i glob=registered.${query.user}.*>
+    <set namespace=register name=${i.name}>
+  </foreach>
+</if>
+
+<!-- modify user validation status -->
+
+<if query.user>
+  <div class=info>
+  <get query.user>
+  <if name=query.change value=disable>
+    <set namespace=register 
+         name=registered.${query.user}.needsvalidation
+	 value=disabled>
+    is disabled
+  <elseif name=query.change value=enable>
+    <set namespace=register
+         name=registered.${query.user}.needsvalidation
+	 value=no>
+    is enabled
+  <elseif name=query.change value=validate>
+    <set namespace=register
+         name=registered.${query.user}.needsvalidation
+	 value=no>
+    is validated
+  </if>
+  </div>
+</if>
+
+<!-- save/restore form -->
+
+<form method=post>
+  <input type=submit value="save registrations" 
+   title="save current registration list"
+   name=save
+  >
+  <input type=submit value="restore registrations"
+   title="restore registrations to version last stored on disk"
+   name=load
+  >
+</form>
+
+<!-- create a user account -->
+
+<if query.create>
+  <div class=info>
+  Account for <b><get query.handle></b>
+  <if name=registered.${query.handle}.needsvalidation match=.>
+    already exists
+  <elseif not name=query.pass match=...>
+    Password too short
+  <else>
+    <digest name=credentials value="${query.handle}:${query.pass}">
+    <namespace name=register>
+      <set name=registered.${query.handle}.credentials value=${credentials}>
+      <set name=registered.${query.handle}.time value=${headers.timestamp}>
+      <set name=registered.${query.handle}.needsvalidation value=no>
+    </namespace>
+    created
+  </if>
+  </div>
+</if>
+
+<!-- user creation form -->
+
+<form method=post prepend=query.>
+<set namespace=local name=query.pass value="">
+<table>
+  <caption>Create a user</caption>
+  <tr><td>handle</td><td><input name=handle></td></tr>
+  <tr><td>pass</td><td><input name=pass></td></tr>
+  <tr><td colspan=2>
+    <input type=submit name=create value="create user">
+ </td></tr>
+</table>
+</form>
+
+<!-- show all users -->
+
+<table>
+  <caption>Set user status</caption>
+  <tr><th>screen name</th><th>validated</th><th colspan=2>change</th></tr>
+  <foreach name=i glob=registered.*.needsvalidation sort>
+    <tr>
+      <form method=post>
+      <input name=user type=hidden value=${i.name.1}>
+      <td><get i.name.1></td>
+      <if name=i.value value=no>
+        <td>yes</td>
+	<td><input type=submit name=change value=disable></td>
+      <elseif name=i.value value=disabled>
+        <td>disabled</td>
+	<td><input type=submit name=change value=enable></td>
+      <else>
+        <td>no</td>
+	<td><input type=submit name=change value=validate></td>
+      </if>
+      <td>
+        <input type=submit name=delete value="remove account">
+      </td>
+      </form>
+    </tr>
+  </foreach>
+</table>
+</body>

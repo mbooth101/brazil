@@ -1,0 +1,111 @@
+# Config file for integrating plain html documents into a common style template.
+# - Uses cookies or URL rewriting to manage session state
+# - The main style template may be customized by the user
+
+handler=		main
+port=			8085
+root=			.
+exitOnError=true
+
+# Obtain the page content, then process through a set of filters
+
+main.class=		sunlabs.brazil.filter.FilterHandler
+main.handler=		content
+main.filters=		extract template integrate process session
+
+# Grab the html content from the filesystem.
+# - Preload any parameters we may need later on
+# - Grab the file specified by the url
+# - deliver the "missing" file otherwise
+
+#####################################################################
+# Obtain the content associated with the request.
+# Use a ChainHandler so the content may come from alternate sources.
+
+content.class=		sunlabs.brazil.server.ChainHandler
+content.handlers=	content.load content.file content.missing
+
+# Allow a query parameter to over-ride the template file on a per-
+# request basis.
+
+content.load.class=sunlabs.brazil.template.SetTemplate
+content.load.sessionTable=data
+content.load.querySet=template.fileName
+
+# Convert the URL into a file, and fetch the file
+
+content.file.class=	sunlabs.brazil.server.FileHandler
+
+# If the file is not found, return the special "not found" file.
+
+content.missing.class=	sunlabs.brazil.handler.NotFoundHandler
+
+#####################################################################
+# The content for the request has been obtained, 
+# either as a file from the file system, or the "not found" file.
+
+# Extract the semantic content out of the file
+# - Extract the common HTML elements, the "title", "body", 
+#   "style sheets", meta tags, etc.
+
+extract.class=		sunlabs.brazil.filter.TemplateFilter
+extract.templates=	sunlabs.brazil.template.ContentTemplate
+
+# Select a look and feel template  The file "main.template" will be used
+# unless overridden by a query parameter to the "printing.template".
+# Setting "template.debug=1" will cause the template file to be re-read
+# from the filesystem at each request.  Normally the file is read once, 
+# and cached by the server.
+
+template.class=		sunlabs.brazil.filter.ReplaceFilter
+template.fileName=	main.template
+template.debug=1
+
+# Combine the information obtained in the "extract"
+# step with our template.
+
+integrate.class=	sunlabs.brazil.filter.TemplateFilter
+integrate.templates=	set nav bsl subst
+
+# If any extracted content, just inserted into our template, contains
+# special markup, we need to process it here.  If only the template contains
+# special (e.g. non html) tags, then this step may be omitted.
+
+process.class=	sunlabs.brazil.filter.TemplateFilter
+process.templates=	set bsl subst form
+
+# Keep track of session state, using browser cookies (if turned on),
+# URL rewriting otherwise.
+
+session.class=		sunlabs.brazil.filter.SessionFilter
+session.cookie=		peanutButter
+
+#####################################################################
+# These are the templates that will process and rewrite selected
+# markup in each html page.
+
+# Handle <get..> and <set...> tags.  The "headers" and "query" options
+# make both the request header and query data options accessable.
+
+set.class=		sunlabs.brazil.template.SetTemplate
+set.sessionTable=	data
+set.headers=		header.
+set.query=		query.
+
+# The "nav" template doesn't process any tags.  Instead, it generates
+# properties that may be used for generating "breadcrumbs".
+
+nav.class=		sunlabs.brazil.template.UrlNavBarTemplate
+nav.includeDir=		on
+
+# Implements the Brazil Scripting Language, consisting of:
+# <if>, <else>, and <foreach>.
+
+bsl.class=		sunlabs.brazil.template.BSLTemplate
+
+#  Process all variable substitutions (${...}) in attribute values.
+subst.class=		sunlabs.brazil.sunlabs.SubstAllTemplate
+
+# Initialize all form data to corrosponding session properties.
+
+form.class=		sunlabs.brazil.template.FormTemplate

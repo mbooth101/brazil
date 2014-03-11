@@ -1,0 +1,170 @@
+<title>Solaris dt_calendar Interface</title>
+<body bgcolor=#EEEEEE>
+<h1>Html version of DT Calendar (monthly view)</h1>
+<h2><date></h2>
+
+<!-- compute month and day from timestamp -->
+
+<if query.time>
+  <date set=date time="${query.time}" format="%m.%Y">
+  <extract name=date glob=*.*>
+  <set local name=query.month value=${date.1}>
+  <set local name=query.year value=${date.2}>
+  <set local name=query.user value=${user}>
+  <set name=month value=${query.month}>
+  <set name=year value=${query.year}>
+</if>
+
+<!-- get user input -->
+
+<form method=post>
+  <table border>
+  <tr><td>
+    user@host
+    <input name=user>
+    month
+    <select name=month>
+      <foreach name=m list="01 02 03 04 05 06 07 08 09 10 11 12"
+         ><option value=${m}><get m></option></foreach>
+    </select>
+    year
+    <select name=year>
+      <foreach name=y list="1998 1999 2000 2001 2002 2003 2004 2005"
+          ><option value=${y}><get y></option></foreach>
+    </select>
+    <input type=hidden name=time value=0>
+    <input type=submit>
+  </td></tr></table>
+</form>
+
+<!-- We can only compute a calendar if we have a month -->
+
+<if query.month>
+  <!-- let the formTemplate remember the previous settings -->
+  <set name=month value=${query.month}>
+  <set name=year value=${query.year}>
+
+  <!-- extract the current date info: month-name, starting day, timestamp -->
+  <date set=date scan="${query.month}/01/${query.year}" format="%B.%w.%s">
+  <extract name=date glob=*.*.*>
+
+  <!-- leap year calculation: works for 1901 - 2099 -->
+  <if name=query.month value=02>
+     <if name="${query.year % 4}" value=0>
+	 <set local name=days.02 value=29>
+     </if>
+  </if>
+
+  <!-- extract calendar data by running dtcm_lookup.  The output was not 
+       intended to be "machine parsable", so this is a bit groty. -->
+  
+  <if query.user>
+    <exec 
+     command="/usr/dt/bin/dtcm_lookup -c ${query.user} -d ${query.month}/01/${query.year} -v month"
+     prepend=cal
+    >
+    <if cal.stdout>
+       <set name=user value=${query.user}>
+    <else>
+       <h2><get cal.stderr></h2>
+       <abort>
+    </if>
+    <foreach name=app property=cal.stdout delim="\nAppointments for ">
+      <extract all name=app match="[^0-9]*([0-9]+)[^:]*: *(.*)">
+      <!--
+         this assumes that "|" never appears in an appointment
+         We can fix it later
+       -->
+      <extract all name=app.1.2 match="\n\t *([0-9]+)\\)" replace="|\\1 ">
+      <foreach name=i property=app.1.2.replace delim=|>
+        <extract name=i
+            match="([0-9]+) *(([0-9]+:[0-9]+[ap]m)- ?([0-9]+:[0-9]+[ap]m))? *(.*)"
+        >
+
+        <!-- assemble properties -->
+
+        <if i.2>
+           <set local name=cal.${app.1.1}.${i.1}.start value=${i.3}>
+           <set local name=cal.${app.1.1}.${i.1}.end value=${i.4}>
+           <set local name=cal.${app.1.1}.${i.1}.appt value=${i.5}>
+           <date set=cal.${app.1.1}.${i.1}.stamp
+            scan="${query.month}/${app.1.1}/${query.year} ${i.3}"
+	    format=%s
+           >
+        <else>
+           <set local name=cal.${app.1.1}.${i.1}.todo value=${i.5}>
+        </if>
+      </foreach>
+    </foreach>
+  </if>
+
+  <!-- output the calendar -->
+
+  <table align=center>
+  <caption>
+    <get query.user> <get date.1> <get query.year>
+  </caption>
+     <tr valign=bottom><td>
+       <form method=post>
+	 <input type=hidden name=time value="${date.3-86400}">
+	 <input type=submit value="previous month">
+       </form>
+     </td><td>
+       <form method=post>
+         <input type=hidden name=time value="${date.3+2764800}">
+         <input type=submit value="next month">
+       </form>
+     </td></tr>
+  </table>
+
+  <table  align=center width=90% cols=7 border>
+
+  <tr>
+    <foreach name=i list="Sun Mon Tue Wed Thu Fri Sat">
+      <td><get i></td>
+    </foreach>
+  </tr>
+
+  <set local name=start value=0>
+  <set local name=end value=0>
+  <foreach name=week list="0 1 2 3 4 5">
+    <tr>
+    <foreach name=dow list="0 1 2 3 4 5 6">
+
+      <!-- compute day number, and "Trim" off non-days on the calendar grid -->
+      <set local name=day value="${dow + 7 * week - date.2 +1}">
+      <if name=day value=1><set local name=start value=1></if>
+      <if name="${day - days.${query.month}}" value=1>
+	  <set local name=end value=1>
+      </if>
+
+      <if name="${start && !end}">
+        <td valign=top width=100 height=75>
+	<font color=red><get name=day></font><br>
+	<small>
+	<foreach name=a glob="cal.${day}.*.stamp" sort>
+	  <b>
+	  <get name=cal.${day}.${a.name.1}.start>-<get name=cal.${day}.${a.name.1}.end>
+	  </b>
+	  <get name=cal.${day}.${a.name.1}.appt><br>
+	</foreach>
+	<font color=green>
+	<foreach name=a glob="cal.${day}.*.todo" sort>
+	  <get name=a.value><br>
+	</foreach>
+	</font>
+
+	</small>
+	</td>
+      <else>
+	<td bgcolor=gray>&nbsp;</td>
+      </if>
+    </foreach>
+    </tr>
+    <if name="${day - days.${query.month}}" glob=[0-9]>
+      <break>
+    </if>
+    </foreach>
+  </table>
+</if>
+</body>

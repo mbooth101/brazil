@@ -1,0 +1,39 @@
+# additional configuration to "web mount" www.experimentalstuff.com
+# This config file may be "appended" to the original config file
+# to add the "www.experimentalstuff.com" site.
+
+port=8086
+
+# The "proxy" handler is added to content.handlers list.
+# - If inserted in front of "content.file", proxied content takes 
+#   precedence over local content.  In this case, when the proxy
+#   is "turned of", we get the local content instead.
+# - If inserted after "content.file", local contend takes precident
+#   over proxied content.  This allows us to make "local" modifications
+#   to remote sites.
+
+content.handlers=	content.load proxy content.file content.missing
+
+#  The "map" filter is added to main.filters
+#  It is placed after all the content is generated, but before
+#  any session information is added.
+ 
+main.filters=		extract template integrate process map session
+
+# map all requests to /exp/... to www.experimentalstuff.com
+# so the remote content appears to be in the document root, and
+# the content is reformatted to suit the local look and feel.
+
+proxy.class=		sunlabs.brazil.handler.MultiProxyHandler
+proxy.prefix=		/exp/
+proxy.host=		www.experimentalstuff.com
+# These should be modified for the local environment
+proxy.proxyHost=	hack.eng
+proxy.proxyPort=	7071
+
+#  Any URL's in local content that reference our proxied site will
+#  be rewritten to come through our proxy.  Consequently, when the
+#  proxy is on, the link points to the re-written site, but when the
+#  proxy is off, the link will point to the original site.
+
+map.class=		sunlabs.brazil.filter.UrlMapFilter

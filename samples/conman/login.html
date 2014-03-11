@@ -1,0 +1,180 @@
+<!-- 
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  vim: filetype=bsl
+
+  Main login page.  Registration, and signon (with signup.html).
+  - dispense password hints
+  - validate accounts (via email ping)
+  - login user
+  - dispay login form or menu
+  Variables:
+    register:registered.${userid}.*	information about each registered user
+    users:user.*			session id's of current users
+-->
+<head>
+<title>login</title>
+<if not name=headers.user-agent glob=*Gecko*>
+  </head>
+  <h2>Unsupported Browser</h2>
+  <body>
+  This is a prototype system.  It only works with Mozilla or Firefox.
+  The system is designed to support other browsers, but it doesn't yet.
+  </body>
+  <abort>
+</if>
+<cookiecheck>
+<uniquewindows>
+<stdinclude hasform=true>
+</head>
+<body onload="document.form.handle.focus();">
+<unregister key="Meetme" queue=BACKGROUND.${SessionID}>
+
+<if name=message>
+  <span class=notice><get message></span>
+  <set name=message>
+</if>
+
+<if name=query.kickmeoff value=${SessionID}>
+  <if name=want match="^[a-zA-Z][a-zA-Z0-9_]+$">
+    <import namespace=users />
+    <debug kicking off other ${want} at ${user.${want}} (I am ${SessionID}>
+    <logoff handle=${want} message="booted off by alter ego">
+    <message text="The other you was booted off, I hope they don't mind">
+    <addheader location=${headers.url}?handle=${save}>
+    <h2>Good Bye other <get want></h2>
+  </if>
+</if>
+
+<!-- email the user a hint -->
+
+<if query.wanthint>
+  <import namespace=register />
+  <if name=registered.${query.wanthint}.email>
+    <inline name=body eval=true>
+      Hello ${query.wanthint}.
+  
+      It appears you might have forgotten your password for:
+        http://${headers.host}${urlpart.1}
+      I'll give you a hint:
+        "${registered.${query.wanthint}.hint}"
+      Hope this helps,
+  
+      The Boss
+    </inline>
+    <sendmail
+     to=${registered.${query.wanthint}.email}
+     from=hints@pbx-3.sfbay.sunlabs.com
+     body=${body}
+     subject="Sunlabs conferencing system account hint"
+    />
+  </if>
+  <span class=info>Emailing a hint to <get query.wanthint></span>
+</if>
+
+<!-- got an email validation request -->
+
+<if query.validate>
+  <import namespace=register />
+  <if name=registered.${query.handle}.email>
+    <lock name=register>
+      <debug Validating handle=${query.handle} validate=${query.validate}>
+      <debug (${query.validate})=?(${registered.${query.handle}.needsvalidation})>
+      <foreach name=i glob=registered.* sort>
+        <debug r: ${i.name}=${i.value}>
+      </foreach>
+      <if name=registered.${query.handle}.needsvalidation value=no>
+        <span class=info>"<get query.handle>" has already been validated</span>
+      <elseif name=registered.${query.handle}.needsvalidation value=${query.validate}>
+        <set namespace=register name=registered.${query.handle}.needsvalidation value=no>
+        <namespace name=register store=config.users />
+        <span class=info>Your account for "<get query.handle>" has been activated</span>
+	<debug USER=validated>
+      <else>
+        <span class=error>Sorry, validation failed for "<get query.handle>"</span>
+        <debug (${query.validate})!=(${registered.${query.handle}.needsvalidation})>
+      </if>
+    </lock>
+  <else>
+    <span class=info>Oops! No account "<get query.handle>" to validate</span>
+  </if>
+</if>
+
+<!-- login a user (need handle, password, session)-->
+
+<if query.login>
+  <import namespace=register />
+  <lock name=${query.handle}>
+    <foreach name=x list=dontcare>
+      <digest name=credentials value="${query.handle}:${query.pass}">
+      <if not name=registered.${query.handle}.credentials value=${credentials}>
+        <span class=error>invalid password/user combination</span>
+        <break>
+      </if>
+      <if not name="registered.${query.handle}.needsvalidation" value=no>
+        <span class=error>This account has not yet been validated.
+	you need to validate your account by going to the URL I sent
+	to your email account (<get name=registered.${query.handle}.email>)</span>
+        <break>
+      </if>
+      <import namespace=users />
+      Other users:
+      <foreach name=i glob=user.*>
+        <qnote session=${i.value}
+         tag="Welcome"
+         message="${query.handle} logged on"
+        >
+      </foreach>
+      <br>
+      <if name="user.${query.handle}">
+        <debug already have: (${user.${query.handle}})>
+	<set name=want value=${query.handle}>
+        <span class=error>
+	  Account is already in use!
+	  <a href=${headers.url}?kickmeoff=${SessionID}>
+	    Kick the other me off the system!
+	  </a>
+	</span>
+        <break>
+      </if>
+
+      <set namespace=users name=user.${query.handle} value=${SessionID}>
+      <set name=userid value=${query.handle}>
+      <set namespace=BACKGROUND.${SessionID} name=userid value=${query.handle}>
+      <namespace name=user_${userid} load=preferences/${userid}.prefs />
+      <import namespace=user_${userid}>
+    </foreach>
+  </lock>
+</if>
+
+<!-- user not registered, display signon form -->
+
+<if not name=userid>
+  <set name=query.pass>
+  <form name=form method=post prepend=query.>
+    <table>
+      <colgroup span=2></colgroup>
+      <tr><td>login name</td><td><input name=handle value="" title="user id"></td></tr>
+      <tr><td>password</td><td><input type=password name=pass title="if you forgot, guess"></td></tr>
+      <tr><td colspan=2 align=center>
+        <input type=submit name=login value=login>
+      </td></tr>
+    </table>
+  </form>
+  <a href=/signup.html${urlpart.2} title="create a new account" >Register a screen name</a><br>
+  <if query.handle>
+    <a href=${headers.url}?wanthint=${query.handle} title="I will email you your hint">
+      email hint for <get query.handle>
+    </a>
+  </if>
+  <abort>
+</if>
+
+<!-- if we got here, then we are logged on -->
+
+<addheader location=/conf.html${urlpart.2}>
+</body>

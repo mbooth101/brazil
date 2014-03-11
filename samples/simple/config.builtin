@@ -1,0 +1,15 @@
+# This sample configuration file is used to make a
+# self contained web-site, where all the content is is contained
+# in the jar file.  The content should be stored under "/html" in the
+# jar file.  This file is stored in the released jar file as:
+# /sunlabs/brazil/server/config
+
+log=0
+handler=builtin-docs
+builtin-docs.class=sunlabs.brazil.server.ChainHandler
+builtin-docs.handlers=docs-html docs-srcs
+docs-srcs.class=sunlabs.brazil.handler.ResourceHandler
+docs-srcs.root=/srcs
+docs-srcs.mime.java=text/plain
+docs-html.class=sunlabs.brazil.handler.ResourceHandler
+docs-html.root=/html

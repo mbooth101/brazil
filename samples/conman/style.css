@@ -1,0 +1,115 @@
+/*
+ *  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+ *  The contents of this file are subject to the Sun Public License Version
+ *  1.0 (the "License"). You may not use this file except in compliance with
+ *  the License. A copy of the License is included as the file "license.terms",
+ *  and also available at http://www.sun.com/
+ *
+ * Standard styles
+ * This allows us to use parameterized stuff
+ * <inline eval=true>
+ */
+
+
+  body {
+    background-color: ${style.body.bg};
+    color: ${style.font.fg};
+    font-family: sans-serif;
+  }
+  table {
+    background-color: ${style.table.bg};
+    border: outset ${style.border.width#0}; 
+    border-collapse: collapse;
+    border-spacing: 5pt;
+    /* layout: fixed; */
+    border-color: red;
+  }
+
+  h1, .center {
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  td {
+    vertical-align: top;
+  }
+
+  th {
+    background-color: ${style.heading.bg};
+    border: outset 0pt; 
+  }
+
+  img {
+    border: ${style.image.border#0};
+    vertical-align: bottom;
+    height: ${style.image.height#1.2em};
+  }
+
+  caption, .caption {
+    font-size: 150%;
+  }
+
+  .content {
+     margin: 10px;
+  }
+
+  textarea, input, select {
+    background-color: ${style.input.bg};
+    color: navy;
+  }
+
+  .banner {
+    background-color: ${style.input.bg};
+    border: 3px ridge red;
+    padding: 3px 1px;
+  }
+
+  .outline {
+    border: 3px ridge red;
+    padding: 3px 1px;
+  }
+
+  .help {
+    color: ${style.help.fg};
+    background-color: ${style.help.bg};
+    width: 100%;
+  }
+
+  .tab {
+    background-color: ${style.table.bg};
+    text-align: right;
+    border: 2px solid firebrick;
+    padding: 3;
+    margin: 3;
+    width: 100%;
+    -moz-border-radius: 10px;
+  }
+
+  .left {
+    text-align: left;
+    width: auto;
+  }
+
+  .tabon {
+     color: red;
+     font-weight: bold;
+  }
+
+  .message {
+     border: 3px ridge orange;
+  }
+
+  .hidden { display: none; }
+  .visible { display: block; }
+  .on { color: red}
+  .off { color: blue}
+
+  .ok { display: inline; background-color: #0F0; }
+  .error { display: inline; background-color: #F00; }
+  .warning { display: inline; background-color: orange; }
+  .info { background-color: #F0F; }
+  .notice { background-color: #FF0; }
+
+/*
+ * </inline>
+ */

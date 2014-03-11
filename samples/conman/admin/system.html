@@ -1,0 +1,58 @@
+<!--
+  vim: filetype=bsl
+-->
+
+<head>
+<link rel="stylesheet" type="text/css" href="/style.css" title="default"> 
+<title>System configuration</title>
+</head>
+<body>
+
+<h1>Edit Application Properties</h1>
+(I hope you know what you are doing!)
+
+<if name=query.scope>
+  <if name=query.scope match=global>
+    <set name=scope value=server>
+  <else>
+    <set name=scope value=local>
+  </if>
+</if>
+
+<table><tr><td>
+<form method=post prepend=x>
+  <if name=scope value=server>
+    Setting properties globally
+    <input type=submit name=scope value="change to local">
+  <else>
+    Setting properties in local session only
+    <input type=submit name=scope value="change to global">
+  </if>
+</form>
+</td></tr></table>
+
+<foreach name=i glob=query.*>
+  <h2> Setting <get i.name.1> = <get i.value> (was <get name=${i.name.1}>)</h2>
+  <if name=scope value=server>
+    <set namespace=server name=${i.name.1} value=${i.value} title=${i.name.1}>
+  <else>
+    <set name=${i.name.1} value=${i.value} title=${i.name.1}>
+  </if>
+</foreach>
+<table border style='align: center'>
+  <tr><th colspan=2>Style Settings</th></tr>
+  <foreach name=i glob=style.* sort>
+    <tr><form prepend="" method=post><td><get i.name></td>
+        <td><input size=25 name=${i.name} value="${i.value}" title=${i.name.1}></td></form></tr>
+  </foreach>
+  <tr><th colspan=2>System Settings</th></tr>
+  <foreach name=i glob=system.* sort>
+    <tr><form prepend="" method=post><td><get i.name></td>
+        <td><input size=25 name=${i.name} value="${i.value}"></td></form></tr>
+  </foreach>
+  <tr><th colspan=2>Misc</th></tr>
+  <foreach name=i list="template.debug set.track icons replace.fileName debug.debug">
+    <tr><form prepend="" method=post><td><get i></td>
+        <td><input size=25 name=${i} value="${${i}}" help=${i}></td></form></tr>
+  </foreach>
+</table>

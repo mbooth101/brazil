@@ -1,0 +1,241 @@
+<!--
+  Self contained Brazil Ajax demo.  This demo is all in one page, but
+  typically each application consists of three html(ish) files:
+  + "app.html"	  Contains the stylesheets, javascript, and initial page
+		  layout.  This is the URL the user fetches.  Anytime the
+		  user hits "reload", this page should regenerate the proper
+		  content.
+  + "query.html"  All form submissions and user "clicks" go here.  It is
+		  distinguished by having query parameters.  The job of
+		  this page is to validate the form data, and enqueue any
+		  page-state changes to background.html.  We don't actually
+		  "submit" forms, as that causes a page reload.  Instead we
+		  submit via an XMLHttp request, which causes the the
+		  background polling XMLHttp request to update the page.
+  + "background.html
+		  This page returns structured data to Javascript as a
+		  result of an XMLHttpRequest.  In this example, the structure
+		  consists of 0 or more sections, each of which contain a
+		  div id, a stylesheet class, and html markup.  The main page
+		  has the div's content and class updated appropriately.
+ -->
+
+<!--
+  This section returns the "display list" updates sent to the client
+  as a result of an XMLHttpRequest.  The plan is to update the current 
+  client state (all variables like ${state.*} and emit the div/class/content
+  tuples that cause the display to be consistent with the new state.
+
+  In Brazil, only one "page" can be active at once for a given session (this
+  is a good thing).  Since we always have a background XMLHttp request polling,
+  we create a second, background session for this page.  Any URL that
+  has "background_" in the name is put is the background session.  See the
+  config file for the details of how this happens.
+-->
+
+<if name=url.orig glob=*background_*>
+
+  <!-- one time initialization -->
+
+  <if not name=initialized>
+    <debug "one time initialization complete">
+    <definemacro name=section>
+      <!-- div=${div#none} class=${class} -->
+    </definemacro>
+    <set name=initialized value=true>
+  </if>
+
+  <!--
+    De-queue the next action.  If actions come too fast, we would
+    need to dequeue multiple actions on each pass (but then this would
+    no longer be a simple example, would it).
+  -->
+
+  <dequeue name=${SessionID} prepend=q. timelimit=200ms>
+
+  <!-- print the Q contents on the server console for debugging -->
+  <foreach name=i glob=q.* sort> <debug dQ ${i.name}=${i.value}> </foreach>
+
+  <!-- we got a form submission event if q.status is set -->
+  <if q.status>
+    <section div=status>Form processed
+    <set name=state.prefix value=${q.query.name}>
+  <else>
+    <section div=status>status
+  </if>
+
+  <!-- udate a cell for each color, chosen randomly -->
+
+  <foreach name=i list="red green blue">
+    <random name=row type=alpha count=8>
+    <random name=col count=8 start=1>
+    <set name=state.${row}${col}.content
+         value="${headers.counter} ${row}:${col}"
+    >
+    <set name=state.${row}${col}.style value="${i}">
+    <section div=${row}${col} class=${i}>
+    <get name=state.prefix default=""> <get name=state.${row}${col}.content>
+  </foreach>
+  <abort>
+</if>
+
+<!--
+  All queries come here. have their data validated, and then
+  send the appropriate event to the background session.
+  The background session will deQ the event, and update the state
+  appropriately.
+-->
+
+<if headers.query>
+  <debug query=${headers.query}>
+  <set namespace=local name=status value="processed">
+  <enqueue name="BACKGROUND.${SessionID}" data="status query.name">
+  <abort>
+</if>
+
+
+<!--
+  This is the "main" page containing the basic div definitions and javascript.
+  It is normally loaded only once.  If reloaded, it needs to load the
+  current state of the system.
+-->
+
+<head>
+<style>
+  .red {background-color: #F00}
+  .green {background-color: #0F0}
+  .blue {background-color: #00F}
+</style>
+
+<title>self-contained Brazil Ajax Firefox Demo</title>
+<script language=javascript>
+  var dosplit=/<!-- *div=([a-zA-Z0-9_]+) *(class=([a-zA-Z0-9_]+))?[^-]*-->/
+  var fetching=0;
+
+  // display status info
+
+  function setStatus(id, value) {
+    var d = document.getElementById(id);
+    if (d) d.innerHTML = value;
+  }
+
+  // process the remote text 
+
+  function process(req) {
+      var sections = req.responseText.split(dosplit);
+      for(var i=1; i<sections.length; i+=4) {
+	 var div=sections[i];
+	 var cls=sections[i+2];
+	 var content=sections[i+3];
+	 var d = document.getElementById(div);
+	 if (d != null)  {
+	     if (cls.length > 0) d.className=cls;
+	     if (content.match(/[^ \t\n]/)) d.innerHTML = content;
+	 }
+      }
+  }
+
+  // get the content in the background
+
+  function fetchUpdate() {
+    var req;
+
+    // this prevents multiple fetches at once
+
+    if (fetching > 0) return 0;
+    fetching=1;
+    req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+	process(req);
+	fetching=0;
+	setTimeout('fetchUpdate()', 100);
+      }
+    }
+    req.open("GET", "/background_ajax.html");
+    req.send(null);
+    return 1;
+  }
+
+  // submitless form submit
+
+  function dosubmit(id) {
+    setStatus("status", "submitting form");
+    var form = document.getElementById(id);
+    var items = form.elements;
+    var sep = "?"
+    var query="";
+    for(var i=0; i<items.length; i++) {
+      query += sep + items[i].name + "=" + escape(items[i].value);
+	 sep = "&";
+    }
+    req = new XMLHttpRequest();
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+        setStatus("status", "form submitted");
+      }
+    }
+    req.open("GET", "/ajax.html" + query);
+    req.send(null);
+    return 1;
+  }
+</script>
+</head>
+
+<import namespace=BACKGROUND.${SessionID}>
+<body bgcolor=white onload='fetchUpdate()'>
+<h1>simple Brazil-Ajax demo in FireFox</h1>
+
+<if not name=headers.user-agent glob=*Gecko*>
+  <font color=red>
+  Sorry, To keep the demo relatively simple,
+  this example only works with FireFox or Mozilla, and not
+  your browser: "<code><get headers.user-agent></code>".
+  The same techniques
+  can be made to work with other browsers, including  IE and Safari, but
+  that is left an excersise for the reader.
+  </font>
+</if>
+<p>
+The 8x8 grid of squares should update themselves.  On each update, 
+three squares are changed at random, each with a different color.
+This demo, although not useful by itself, demonstrates one design
+pattern for using Brazil for Ajax that works for many types of applications.
+
+<!--
+  This builds the main page structure, including named div's whose
+  content and and/or style will be updated dynamically.
+-->
+
+
+<table border>
+<foreach name=row list="a b c d e f g h">
+  <tr>
+  <foreach name=col list="1 2 3 4 5 6 7 8">
+    <td id=${row}${col} class="${state.${row}${col}.style#none}">
+      <get state.prefix> <get name=state.${row}${col}.content default=${row}-${col}>
+    </td>
+  </foreach>
+  </tr>
+</foreach>
+</table>
+
+<h2>A sample form</h2>
+<p>
+The contents of the field will be prepended to the table cells.
+Instead of submitting the form normally, we will submit it via
+XMLHttpRequest() which will prevent the page from reloading.
+<p>
+alternately, we could submitit normally, and make sure the server
+returns "204 No Content", which will (in theory) cause the browser
+to ignore the submission, and not refresh the page content. (This 
+doesn't always work though, the the method used here is more reliable).
+
+<form id=myform onsubmit='return false';>
+  prefix: <input name=name default=${state.prefix}>
+  <input type=button name=submit value=submit onclick='dosubmit("myform")'>
+</form>
+<hr>
+Status: <span id=status>status</span>
+</body>
+</html>

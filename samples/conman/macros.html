@@ -1,0 +1,302 @@
+<!--
+  Copyright (c) 2006-2007 Sun Microsystems, Inc.
+  The contents of this file are subject to the Sun Public License Version
+  1.0 (the "License"). You may not use this file except in compliance with
+  the License. A copy of the License is included as the file "license.terms",
+  and also available at http://www.sun.com/
+
+  global macros for this stuff
+  vim: filetype=bsl
+-->
+
+<link rel="stylesheet" type="text/css" href="/style.css" title="default"> 
+<h1>Reading in macros</h1>
+<ul>
+
+<!-- include standard style sheets and js (except if in filtering mode) -->
+<li> stdinclude
+<definemacro name=stdinclude global=true>
+  <if not name=filtering>
+    <link rel="stylesheet" type="text/css" href="/style.css" title="default"> 
+    <set namespace=local name=hasform value=${hasform#false}>
+    <if name=hasform value=true>
+      <script type="application/JavaScript" src="/std.js" defer></script>
+    </if>
+  </if>
+</definemacro>
+
+<!-- if we are not logged in, redirect to login page -->
+<li>checklogin
+<definemacro name=checklogin global=true>
+  <if not name=userid>
+    <addheader location=${goto#/login.html}${urlpart.2}>
+    <abort>
+   </if>
+  <set name=last.${userid} namespace=users value=${headers.timestamp}>
+</definemacro>
+
+<!-- make sure each window has a unique sessionID -->
+
+<li>uniquewindows
+<definemacro name=uniquewindows global=true>
+  <script type="application/JavaScript">
+     if (!this.name || !this.name.match(/:[0-9]+:/)) {
+        this.name= ":" + Math.round(10000*Math.random()) + ":";
+     }
+     if (this.location.pathname.indexOf(this.name) == -1) {
+         redo = this.location.pathname.replace(/:[0-9]+:/,"") + this.name;
+         this.location.pathname = redo + this.location.search;
+     }
+  </script>
+  <if not name=headers.url match=:[0-9]+:>
+     <abort>
+  </if>
+</definemacro>
+
+<!--
+  Make sure the browser has cookies turned on.
+  - If we don't have a cookie, send a "set cookie", and redirect with a query parameter
+  - If we don't have a cookie and the query param is false, then punt to nocookies
+  - If we have a cookie and the query parameter, redirect removing the query parameter
+  - Otherwise, we are good to go.
+-->
+
+<li>cookiecheck
+<definemacro name=cookiecheck global=true>
+  <if name=gotCookie> 
+    <if query.checkForCookies>
+      <addheader location="${headers.url}">
+      <abort>
+    </if>
+  <else> 
+    <if query.checkForCookies>
+      <debug redirecting to no-cookie page>
+      <addheader location="/${nocookies#nocookies.html}">
+    <else>
+      <debug "adding cookiecheck to url">
+      <addheader location="${headers.url}?checkForCookies=on">
+    </if>
+    <abort>
+  </if>
+</definemacro>
+
+<!-- set a message for the login screen (foreground session) -->
+
+<li>message
+<definemacro name=message global=true>
+  <extract name=SessionID match="(BACKGROUND.)?(.*)" prepend=id>
+  <set namespace=\${id.2} name=message value="${text}\\lbr\\g">
+</definemacro>
+
+<!-- set a variable from the fg session into both sessions -->
+
+<li>set2
+<definemacro name=set2 global=true>
+  <set name=${name} value=${value}>
+  <set name=${name} value=${value} namespace=BACKGROUND.${SessionID}>
+</definemacro>
+
+<li>cli
+<definemacro name=cli global=true>
+  <amicommand server=${system.server} prepend=${prepend#cli} action=command command="${command}">
+  <debug amicommand server=${system.server} prepend=${prepend#cli} action=command command="${command}">
+</definemacro>
+
+<!-- put an asterisk database entry.  Need: family, key, value -->
+
+<li>dbput
+<definemacro name=dbput global=true>
+  <amicommand server=${system.server} prepend=${prepend#db}
+   action=command
+   command='database put ${family} ${key} \q${value}\q'
+  >
+</definemacro>
+
+<li>dbdel
+<definemacro name=dbdel global=true>
+  <amicommand server=${system.server} prepend=${prepend#db}
+   action=command
+   command='database del ${family} ${key}'
+  >
+</definemacro>
+
+<!-- fetch and extract database entries (protect family and key with "'s as needed -->
+
+<li>dbshow
+<definemacro name=dbshow global=true>
+  <amicommand server=${system.server} prepend=${prepend#db}
+   action=command
+   command='database show ${family} ${key}'
+  >
+</definemacro>
+
+<!--
+  Choose the proper icon:
+   given a divid, get calleridnum in id.${divid}
+   map "calleridnum".icon to the icon, or use ${icon} if not available
+  std one
+  "action" is the name of the submit parameter
+-->
+<li>icon
+<definemacro name=icon global=true>
+  <if name=role value=admin>
+    <nobr><a href="javascript:void(dosubmit(window.name, 'action.${mute}mute','${divid}'))"
+    ><img src="images/\${user.icon.${id.${divid}}#${icon}}_${state#off}.gif"
+      title="${title.icon${state}}"
+    ></a>
+    <a href="javascript:dosubmit(window.name, 'action.boot','${divid}')"
+    ><img src=/images/boot3.gif title="boot this person out of the conference"
+    ></a>
+    <a href="javascript:dosubmit(window.name, 'action.louder','${divid}')"
+    ><img src=/images/loud.gif title="increase this user's volume"
+    ></a>
+    <a href="javascript:dosubmit(window.name, 'action.softer','${divid}')"
+    ><img src=/images/quiet.gif title="decrease this user's volume"
+    ></a></nobr>
+  <else>
+    <img src="images/\${user.icon.${id.${divid}}#${icon}}_${state#off}.gif" title="view${state}">
+  </if>
+</definemacro>
+
+<li>username
+<definemacro name=username global=true>
+   <nobr>
+   <a href='javascript:reqchange("${divid}","${cid}")'>
+     <span id=${divid}name><get name=user.name.${cid}></span>
+   </a>
+   </nobr>
+</definemacro>
+
+
+<!--
+  Run a meetme admin command
+  confno:	The conference number to apply the command to
+  action:   The single letter action to perform
+  user:     The user number
+  
+-->
+
+<li>Meetmeadmin
+<definemacro name=meetmeadmin global=true>
+  <inline name=Data namespace=local>
+     <br><b>Command:</b> ${notice}
+  </inline>
+  <enqueue name=BACKGROUND.${SessionID}  data="Event#message Data">
+  <amicommand server=${system.server} prepend=${prepend#q}
+     action=originate
+     Channel=local/${confno}@ami-meetmeadmin/n
+     Variable="command=${action}${user}"
+     Application=Wait
+     data=3
+  >
+</definemacro>
+
+<li> tab
+<!--
+  tag: what we see
+  url: the file (From /)
+  class: (tab) class for this
+  class2 (tabon) additional class for selected
+-->
+
+<definemacro name=tab global=true>
+  <if name=url.orig glob="/${url}.html*">
+     <${div#div} class="${class#tab} ${class2#tabon}" title="${title}">${tag}</${div#div}>
+  <else>
+     <${div#div} class=${class#tab} title="${title}">
+       <a href=/${url}.html${urlpart.2}${query}>${tag}</a>
+     </${div#div}>
+  </if>
+</definemacro>
+
+<!--
+  Enqueue a message for the "append" window
+  - session: the session to send the note to
+  - tag: the tag or message type
+  - message: the message
+-->
+
+<li>qnote
+<definemacro name=qnote global=true>
+  <inline name=Data namespace=local>
+        <br><b>${tag#notice}:</b> ${message#?}
+  </inline>
+  <enqueue name=BACKGROUND.${session} data="Event#message Data">
+</definemacro>
+
+<!--
+  Extract all the conferences into the conference namespace
+  - entries are of the form: conf.[confno].[key]=[value]
+-->
+
+<li>get_confs
+<definemacro name=getconfs global=true>
+  <lock name=conferences>
+  <if not name=have_conferences>
+    <namespace name=conference clear=true />
+    <debug Clearing conference namespace *************>
+    <amicommand server=${system.server} prepend=_q
+     action=command
+     command="database show"
+    >
+
+    <extract name=_q.data prepend=_c
+     match="/conf([0-9]+)/([^ ]+) *: *([^\n]+)\n"
+     map="conf key value"
+     all=true
+    >
+
+    <!-- Create conf.[confno].[key]=[value] -->
+  
+    <set name=_confs>
+    <set name=_confcount>
+    <foreach name=i property=_c.matchlist>
+      <set namespace=conference name=conf.\${_c.\${i}.conf}.\${_c.\${i}.key}
+           value=\${_c.\${i}.value} convert=trim>
+      <if name=_c.\${i}.key value=owner>
+        <append name=_confs value=\${_c.\${i}.conf} delim=" ">
+	<increment name=_confcount>
+      </if>
+    </foreach>
+   <set namespace=conference name=conf.list value=\${_confs}>
+   <set namespace=conference name=conf.total value=\${_confcount}>
+   <set namespace=server name=have_conferences value=true>
+  </if>
+  <debug extracting \${_c.matches} conferences>
+  </lock>
+  <import namespace=conference />
+</definemacro>
+
+<li>invalidate_confs
+<definemacro name=invalidate_confs global=true>
+  <set name=have_conferences namespace=server>
+</definemacro>
+
+<!--
+  handle:	The handle to logout
+  message:	The logout message
+
+  users:user.${handle} = SessionID
+  - users namespace *must* be imported
+  - remove userid (in session id and background session id
+  - unregister from asterisk queue
+  - set message for next time
+  - unset user.${handle} in users namespace
+-->
+<li>logoff
+<definemacro name=logoff global=true>
+  <lock name=${handle}>
+    <if name=user.${handle}>
+      <set namespace=local name=_id value=${user.${handle}}>
+      <set namespace=\${_id} name=userid>
+      <set namespace=BACKGROUND.\${_id} name=userid>
+      <set namespace=\${_id} name=message value="${message}">
+      <set namespace=users name=user.${handle}>
+      <set namespace=users name=last.${handle}>
+      <enqueue name=BACKGROUND.\${_id} data="Event#notify message#expired">
+      <unregister key="Meetme" queue=BACKGROUND.\${_id}>
+    </if>
+  </lock>
+</definemacro>
+
+</ul>

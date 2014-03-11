@@ -1,0 +1,117 @@
+#!/usr/sfw/bin/tclsh8.3
+# Copyright (c) 2004-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+#
+# agi script interface to freeTTS
+# We'll use it to talk to the Brazil free tts server and generate a speech file
+# The speech file can have embedded variables of the form $(foo) whose
+# values (if known) will be interpolated
+
+# Arguments:
+# 1:  The text to be synthesized and streamed
+# 2:  The DTMF digits that can terminate playback
+#       If the digit "X" is present, then no playback is done, only the file is generated
+#     The variable ${digit} will return the DTMF, if any
+#     The variable ${complete} displays how far (in %) into the file they got
+#     The variable ${file} returns the file name that may be used in a playback() command
+
+package require http
+
+# Change the following 3 variables to match your system setup
+set Base /var/opt/asterisk/lib/sounds	;# Where Asterisk looks for sound files
+set Dir freetts				;# the Subdir to put all synth'd files into
+set Host "localhost:8080/synth"		;# Where to access the freetts server
+
+set Path [file join $Base $Dir]
+catch {file mkdir $Path}
+
+# send an agi command, return the response
+
+proc agi_cmd {cmd} {
+   puts $cmd
+   flush stdout
+   # puts stderr "(result $cmd)"
+   set result [gets stdin]
+   return $result
+}
+
+# log a message at a verbose level
+
+proc log {msg {level 3}} {
+   regsub -all {"} $msg ' msg
+   agi_cmd "VERBOSE \"$msg\" $level"
+}
+
+# this is for debugging
+if {[catch {
+
+# get args from context
+while {1} {
+   # puts stderr "getting args"
+   set l [gets stdin]
+   if {$l == ""} break;
+   regexp {([^:]+):(.*)} $l foo name value
+   set AGI($name) $value
+}
+
+set text [string tolower [lindex $argv 0]]
+set digits "#" ;# backward compatibility
+catch {set digits [lindex $argv 1]}
+# log "$argv"
+
+# fetch the synthesized text
+
+set query [::http::formatQuery $text]
+
+# compute a file name
+
+regsub -all " +" $text _ text
+regsub -all {[^a-z0-9X_.@]} $text {} text
+
+# fetch the utterance
+
+set file [file join $Path $text.ulaw]
+
+if {![file exists $file]} {
+  log "synthesizing $file"
+  set channel [open $file w]
+  ::http::geturl http://$Host?encoding=ML8&format=au&transtext=$query \
+  	-channel $channel
+  flush $channel
+  close $channel
+} else {
+  log "using cached $file"
+}
+agi_cmd "SET VARIABLE file [file join $Dir $text]"
+
+if {[regexp X $digits]} {
+  log "generate file only"
+  exit 0
+}
+
+set result [agi_cmd "STREAM FILE freetts/$text \"$digits\""]
+# log $result
+
+# the result is the decimal value of the digit?
+
+if {[regexp {result=([0-9][0-9])} $result all code]} {
+   if {$code >= 48} {set digit [expr {$code - 48}]}
+   if {$code == 35} {set digit #}
+   if {$code == 42} {set digit *}
+   agi_cmd "SET VARIABLE digit $digit"
+   log "digit=$digit"
+   if {[regexp {endpos=([0-9]+)} $result all pos]} {
+      set percent [expr {$pos * 100 / [file size $file]}]
+      agi_cmd "SET VARIABLE complete $percent"
+      log "complete=$percent"
+   }
+} else {
+   agi_cmd "SET VARIABLE complete 100"
+}
+}]} {
+   agi_cmd "VERBOSE \"oops: $::errorInfo\""
+}
+exit 0

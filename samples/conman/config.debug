@@ -1,0 +1,22 @@
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+
+# tack this onto the end to enable diagnostic console output
+
+# enable <debug>
+debug.debug=1
+
+# enable template diagnostics
+template.debug=true
+misc.debug=1
+ast1.debug=true
+
+# print all sets and clears on the console
+set.track=true
+list.track=true
+
+# don't cache templates
+replace.debug=1

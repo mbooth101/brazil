@@ -1,0 +1,23 @@
+<head>
+  <title>Sample Site printing template</title>
+</head>
+<body bgcolor=white>
+  <table width=100% cols=2 bgcolor=whitesmoke>
+    <tr>
+      <td><a href=/index.html>Sample Site</a></td>
+      <td align=right><property title></td>
+    </tr>
+  </table>
+
+  <content>
+   <property content>
+  </content>
+
+  <table bgcolor=whitesmoke border=0 width=100% >
+    <tr><td align="center"><small>
+      This page is: http://<property header.host><property header.url><br>
+      Last Modified: <property last-modified><br>
+      copyright (c) 2001, somebody
+    </td></tr>
+  </table>
+</body>

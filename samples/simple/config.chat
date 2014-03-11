@@ -1,0 +1,48 @@
+# play with dynamic html - a simple chat system
+
+handler=main
+port=7002
+log=5
+
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=cookie bg template file
+
+# Use browser cookies for session management
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=chat
+cookie.persit=true
+
+# Make sure async XMLHttpRequest is in a different session
+
+bg.class=sunlabs.brazil.handler.SimpleSessionHandler
+bg.extract=${query}
+bg.re=background=1
+bg.value=back.${SessionID}
+bg.force=true
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates=set bsl macro misc headers queue debug lock
+template.suffix=.html
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+# This tracks a variable changes to the server console
+set.track=true
+
+bsl.class=sunlabs.brazil.template.BSLTemplate
+
+macro.class=sunlabs.brazil.template.MacroTemplate
+macro.subst=true
+
+misc.class=sunlabs.brazil.sunlabs.MiscTemplate
+lock.class=sunlabs.brazil.sunlabs.LockTemplate
+
+headers.class=sunlabs.brazil.template.AddHeaderTemplate
+queue.class=sunlabs.brazil.template.QueueTemplate
+# This turns on "printf" style debugging to the server console
+debug.class=sunlabs.brazil.template.DebugTemplate
+debug.debug=1
+
+file.class=sunlabs.brazil.server.FileHandler

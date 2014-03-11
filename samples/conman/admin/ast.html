@@ -1,0 +1,6 @@
+<h1>unregistering all events!</h1>
+<asterisk>
+<foreach name=i glob=ast1.event.* sort numeric>
+  <get i.name>=<get i.value><br>
+</foreach>
+<unregister all=true>

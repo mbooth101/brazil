@@ -1,0 +1,105 @@
+# Create an opinion poll website
+
+handler=main
+port=7001
+log=5
+
+main.class=sunlabs.brazil.server.ChainHandler
+main.handlers=map cookie template
+
+# Map all url's to the page template.
+# the "export" option, when used with this "match" expression
+# makes it easy to refer to the url without the leading "/" (as "url.1")
+
+map.class=sunlabs.brazil.handler.UrlMapperHandler
+map.match=/(.*)
+map.export=url.
+map.replace=/vote.html
+
+# Use browser cookies for session management
+
+cookie.class=sunlabs.brazil.handler.CookieSessionHandler
+cookie.cookie=sample
+cookie.persist=true
+
+# Process the "main" template, which is "every page".
+# Enable variable access, BSL scripting, variable substitution
+# inside of tag attributes, and variable arithmetic.
+
+template.class=sunlabs.brazil.template.TemplateHandler
+template.templates=set bsl subst misc
+template.modified=true
+# template.debug=1
+
+set.class=sunlabs.brazil.template.SetTemplate
+set.query=query.
+set.headers=headers.
+bsl.class=sunlabs.brazil.template.BSLTemplate
+subst.class=sunlabs.brazil.sunlabs.SubstAllTemplate
+misc.class=sunlabs.brazil.sunlabs.MiscTemplate
+
+#############################3
+# site specific options
+
+# max votes allowed per person
+maxvotes=3
+
+# default width to scale images to
+imagewidth=500
+
+# Where to get the images from for this demo (I hope they don't mind)
+imagebase=http://www.lib.utexas.edu/maps/states/
+
+# The states:  This is used to drive the site.  The Spelling
+# matches the names used by the "image server" above.
+
+state.al=alabama
+state.ak=alaska
+state.az=arizona
+state.ar=arkansas
+state.ca=california
+state.co=colorado
+state.ct=connecticut
+state.de=delaware
+state.fl=florida
+state.ga=georgia
+state.hi=hawaii
+state.id=idaho
+state.il=illinois
+state.in=indiana
+state.ia=iowa
+state.ks=kansas
+state.ky=kentucky
+state.la=louisiana
+state.me=maine
+state.md=maryland
+state.ma=massachusetts
+state.mi=michigan
+state.mn=minnesota
+state.ms=mississippi
+state.mo=missouri
+state.mt=montana
+state.ne=nebraska
+state.nv=nevada
+state.nh=new_hampshire
+state.nj=new_jersey
+state.nm=new_mexico
+state.ny=new_york
+state.nc=north_carolina
+state.nd=north_dakota
+state.oh=ohio
+state.ok=oklahoma
+state.or=oregon
+state.pa=pennsylvania
+state.ri=rhode_island
+state.sc=south_carolina
+state.sd=south_dakota
+state.tn=tennessee
+state.tx=texas
+state.ut=utah
+state.vt=vermont
+state.va=virginia
+state.wa=washington
+state.wv=west_virginia
+state.wi=wisconsin
+state.wy=wyoming

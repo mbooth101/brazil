@@ -1,0 +1,38 @@
+#!/bin/sh
+# Copyright (c) 2004-2007 Sun Microsystems, Inc.
+# The contents of this file are subject to the Sun Public License Version
+# 1.0 (the "License"). You may not use this file except in compliance with
+# the License. A copy of the License is included as the file "license.terms",
+# and also available at http://www.sun.com/
+#
+# check a BSL file for validity (sau 3/04)
+
+# Classpath to brazil jar file
+LIB=/home/suhler/conman/brazil-2.3
+
+# common bsl tags requiring matching
+TAGS="table tr td th inline for foreach if namespace script server sql style definemacro section"
+
+if [ $# -eq 0 ]; then
+    echo "usage: $0 [-xml] file.html [additional matching tags...]"
+    echo " - check for required matching bsl tags"
+    echo " - with [-xml], require all tags to match"
+    echo "   (or just additional tags, if listed)"
+    exit 1
+fi
+
+case "$1" in
+'-xml' )
+  TAGS=""
+  shift
+  ;;
+-* )
+  echo "invalid option: $1, ignored"
+  shift
+;;
+esac
+
+FILE=$1
+shift
+
+java -classpath $LIB sunlabs.brazil.sunlabs.XmlTree $FILE $TAGS $*

@@ -1,0 +1,230 @@
+Conference Manager (ConMan) 0.4 Copyright (c) 2006-2007 Sun Microsystems
+Stephen Uhler (suhler@sun.com)
+
+This is a Web Based Conference Manager for the Asterisk Meetme application.
+It supports the following features:
+
+* Web based creation and management of meetme conferences
+* real-time (e.g. "AJAX") conference status, showing participants, 
+  their identities and status.
+* Administrative control of conference attendees, including muting, 
+  volume settings, and private messaging.
+* User's may call in, or be called (invited).
+* Support for multiple Asterisk servers, running either locally
+  or remotely
+* Administrative monitoring and control of Asterisk via the web.
+* Easily (at least for me) customized templates, including the ability
+  to integrate conferencing into other applications.
+
+This application  demonstrates some of the following features of the
+Brazil framework:
+* Web integration with asterisk
+* Ajax/Comet strategies using the Brazil template system
+* Sign-on and identity management
+
+Presentation materials I used for a talk at Astericon are here:
+  http://www.experimentalstuff.com/Technologies/Asterisk/conman-astricon2006.pdf
+
+==========================================================================
+Architectural view:
+
+    |--------|                     |----------|
+    | Brazil |<----freetts/AGI-----|          |
+    |  Web   |                     | Asterisk |
+    | server |<-Manager interface->|          |
+    |--------|                     |----------|
+        ^                                ^
+        |                                |
+        v                                v
+    |--------|                         phone
+    |        |                         system
+    | firefox|
+    |        |
+    |--------|
+
+ * Brazil web server:
+   - includes "freetts" which converts http requests containing
+     text into a voice file suitable for playback by Asterisk.
+     The "freetts" agi script issues the URL to the web server, 
+     and streams it back to Asterisk
+   - has the templates for converting Asterisk events and manager commands
+     to a web interface
+   - has the server configuration that manages the templates and synthesis
+
+ * Asterisk
+   - dialplan extensions for managing the meeting control
+   - an "updated" version of "meetme".
+   - you supply a connection to the phone world
+   
+Installation instructions (for Solaris):
+----------------------------------------
+
+Overview:
++ Install Asterisk, add in configuration for Conference Manager
++ Install the Brazil Framework Web server and templates
++ Edit the config files for your installation
++ put "freeTTSall.jar" and "freetts" in the proper locations
++ edit and start the "run" script
++ fire up "firefox" and enjoy
+
+- Install the Solaris Asterisk packages. 
+  + Asterisk packages with the "meetme" enhancements are available at:
+    http://www.solarisvoip.com/
+  + Alternately, download and built the Asterisk packages from
+    the repository (see https://svn.sunlabs.com/svn/solaris-asterisk/README).
+    SVN versions >= 142 have the meetme enhancements included; for earlier
+    versions, Use the copy of "app_meetme.c"  included here.  The included
+    app_meetme.c should work with any Asterisk version/platform from the
+    1.2 series.  I run this on Solaris, but is works on Linux too.
+
+- Add the conferencing extensions to your dialplan:
+  Copy "misc/conf2.conf" to /etc/opt/asterisk/
+  This is the dialplan for the conferencing application.
+  In addition, you will need to change/add two lines to make this work:
+  + the Dial() command in conf2.conf needs to change to indicate how
+    to call out to your phone users (this is only required for dial-out
+    operation).  (see the comment in the file, in the
+    "ami-callformeeting" context).
+  + add an entry to your extensions.conf that looks like:
+    #include conf2.conf
+    exten => 18806,2,Goto(conf2,s,1) ; this extension goes to the conference
+    [the "18806" should be replaced by the extension you want your user's to
+    dial to enter the conferencing system].
+
+- "config.conman" contains the application defaults.  Some will need to
+  be changed for your installation.  In particular
+   + system.emaildomain
+     restricts accounts to a particular email domain
+   + system.number=x18806 (XXX-XXX-4806)
+     The phone number to reach the conferencing system (see below)
+
+    (See the file misc/sample.conf for the Asterisk config files needed
+    to get this working).
+
+- modify /etc/opt/asterisk/manager.conf to match the entries in config.server
+  And make sure the manager is enabled. See the example in misc/sample.conf.
+  If you don't run the web interface on the same machine as Asterisk, then
+  you should change the "permit" line in manager.conf as well.
+
+- copy misc/freetts to /var/opt/asterisk/lib/agi-bin
+  + Make sure it is executable, and the path to "tcl" is correct (it should be)
+  + The variables "Base", "Dir" and "Host" may be changed to suit the
+    local environment.  As supplied, it is assumed the freetts server
+    is running on the Asterisk host, port 8080.
+    If not, you will need to change "Host" appropriately.
+
+- Edit the file "credentials" to supply any admin users and passwords.
+  Authentication is done using Digest Authentication. Entries are of the
+  form:
+    id1=pass1
+    id2=pass2
+
+- edit "./run" to make sure ROOT points to the proper location.
+  Make sure "brazil-2.3.jar" and "freeTTSall.jar" are in the locations
+  indicated in the "run" script.  A copy of freeTTSall.jar is available at:
+  http://n-a-w-s.svn.sourceforge.net/viewvc/n-a-w-s/trunk/auxlib/libs-external/.
+  This is simply a repackaging of the "freetts" system available at:
+  "http://freetts.sourceforge.net/".
+
+
+- This application requires an "enhanced" version of the meetme
+  application. The source is in misc/app_meetme.c.  The included version
+  works with Asterisk 1.2. This one:
+   - adds some more manager events
+   - fixes a couple of bugs
+   - adds a "whisper" capability
+  The "enhanced" meetme is included in the solaris packages revision 142 or
+  greater.
+
+Start Asterisk (or do a reload)
+  - ./run  [start the Brazil server]
+  - Point firefox at: http://localhost:8080/, or whatever port you started this 
+    stuff on.
+
+=================================================
+
+NOTES
+
+* The Brazil server and Asterisk may run on the same or difference machines.
+  + The config.server file specifies where Brazil looks to find Asterisk
+  + the Host parameter in the freetts agi script specifies where Asterisk finds
+    the Brazil server (for text-2-speech).
+  + The text2speech server in Brazil can run separately from the
+    conference application.
+* The template "process.html" interacts with the entries in "conf2.conf".
+  In general, you can't change one without also changing the other.
+* All the templates are edittable.  Watch out for:
+  - process.html (see the above note)
+  - monitor.html.  Muck with the javascript at your own risk.
+* Certain required "variables"  are named in the server configuration
+  files. You can't change them without affecting the templates.
+* If you run "java -jar brazil-2.3.jar [port nnn]" the server will
+  start (on port nnn) and dish up it's documentation
+
+FILES
+
+admin
+  all html files in here require digest authentication.  Some are symlinks
+  to other files that look at the URL to add capabilities
+brazil-2.3.jar
+  The base brazil jar file
+config.conman
+  Application specific settings
+config.server
+  Main Brazil server config file
+config.users
+  Saved user accounts
+config.title
+  table of mappings for "title" attributes
+credentials
+  Credentials for digest authentication in /admin/...
+freeTTSall.jar
+  The text-2-speech synthesizer at http://freetts.sourceforge.net/, 
+  packaged into a single jarfile.
+images
+  Images and icons for the web site
+init.macros (macros.html -> alias)
+  The initial BSL macros
+main.template
+  The conference template for the filtering version
+notes
+  current development notes, by date
+preferences
+  where the user preferences are stored
+run <port>
+  Start the server
+style.css
+  our base style sheet
+
+Template files (erroneously called .html)
+
+Main flow:
+  index.html -> login.html -> conf.html ->monitor.html
+                   |                          |
+	       signup.html                process.html
+
+bugs.html
+  known bugs shown to users
+confadmin-*.html
+  conference creation and administration
+conf.html
+  select a conference to monitor
+createconf.html
+  conference creation template (not used yet)
+index.html
+  Start page
+login.html
+  Sign on page, including user administration
+logout.html
+  Sign off page
+macros.html
+  link to init.macros
+monitor.html
+  current meeting page
+newpass.html
+  change user password (not done)
+nocookies.html
+  present no cookies message
+process.html
+  main meeting link processing page:
+  - accepts foreground hits from page, enqueues responses
