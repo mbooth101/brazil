@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+   Copyright 2014 Mat Booth <mbooth@apache.org>
+
+   Sun Public License Notice
+
+   The contents of this file are subject to the Sun Public License 
+   Version 1.0 (the "License"); you may not use this file except in 
+   compliance with the License. A copy of the License is available at 
+   http://opensource.org/licenses/SPL-1.0
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>uk.co.matbooth</groupId>
+  <artifactId>sunlabs.brazil</artifactId>
+  <version>2.3.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
+
+  <name>Brazil Framework</name>
+  <description>Extremely small footprint Java HTTP stack.</description>
+  <url>https://github.com/mbooth101/brazil</url>
+  <inceptionYear>1999</inceptionYear>
+
+  <developers>
+    <developer>
+      <name>Mat Booth</name>
+      <email>mbooth@apache.org</email>
+    </developer>
+  </developers>
+
+  <issueManagement>
+    <url>https://github.com/mbooth101/brazil/issues</url>
+    <system>GitHub Issues</system>
+  </issueManagement>
+
+  <scm>
+    <url>https://github.com/mbooth101/brazil</url>
+    <connection>
+      scm:git:git@github.com:mbooth101/brazil.git
+    </connection>
+    <developerConnection>
+      scm:git:git@github.com:mbooth101/brazil.git
+    </developerConnection>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>Sun Public License, Version 1.0</name>
+      <url>http://opensource.org/licenses/SPL-1.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <properties>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
+    <skipTests>true</skipTests>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5.1</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <!-- We only need to build the bits that have no external dependencies -->
+          <excludes>
+            <exclude>sunlabs/brazil/beanshell/*.java</exclude>
+            <exclude>sunlabs/brazil/derby/*.java</exclude>
+            <exclude>sunlabs/brazil/email/*.java</exclude>
+            <exclude>sunlabs/brazil/groovy/*.java</exclude>
+            <exclude>sunlabs/brazil/javascript/*.java</exclude>
+            <exclude>sunlabs/brazil/ldap/*.java</exclude>
+            <exclude>sunlabs/brazil/python/*.java</exclude>
+            <exclude>sunlabs/brazil/servlet/*.java</exclude>
+            <exclude>sunlabs/brazil/slim/*.java</exclude>
+            <exclude>sunlabs/brazil/ssl/*.java</exclude>
+            <exclude>sunlabs/brazil/tcl/*.java</exclude>
+            <exclude>sunlabs/brazil/velocity/*.java</exclude>
+            <exclude>tcl/lang/*.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.4.0</version>
+        <configuration>
+           <manifestLocation>${project.build.directory}/osgi</manifestLocation>
+           <instructions>
+             <_nouses>true</_nouses>
+             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+           </instructions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>${project.build.directory}/osgi/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

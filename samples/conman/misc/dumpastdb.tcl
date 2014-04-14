@@ -1,4 +1,4 @@
-#!/usr/sfw/bin/tclsh8.3
+#!/usr/bin/tclsh
 # Copyright (c) 2004-2007 Sun Microsystems, Inc.
 # The contents of this file are subject to the Sun Public License Version
 # 1.0 (the "License"). You may not use this file except in compliance with
