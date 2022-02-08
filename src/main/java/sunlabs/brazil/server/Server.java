@@ -593,7 +593,7 @@ public class Server
 			sub[i].interrupt();
 			sub[i].join();
 		    }
-		    yield();
+		    this.yield();
 		}
 	    } catch (Exception e) {}
 
